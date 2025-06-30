@@ -15,7 +15,7 @@ install_redhat() {
 # Function to install dependencies for Arch-based distributions
 install_arch() {
     sudo pacman -Syu --noconfirm
-    sudo pacman -S --noconfirm base-devel libconfig dbus libev libx11 libxcb libxext libgl libegl libepoxy meson pcre2 pixman uthash xcb-util-image xcb-util-renderutil xorgproto cmake libxft libimlib2 libxinerama libxcb-res xorg-xev xorg-xbacklight alsa-utils ghostty
+    sudo pacman -S --noconfirm base-devel libconfig dbus libev libx11 libxcb libxext libgl libegl libepoxy meson pcre2 pixman uthash xcb-util-image xcb-util-renderutil xorgproto cmake libxft libimlib2 libxinerama libxcb-res xorg-xev xorg-xbacklight alsa-utils
 }
 
 # Detect the distribution and install the appropriate packages
@@ -112,7 +112,7 @@ picom_animations() {
     # Clone the repository in the home/build directory
     mkdir -p ~/build
     if [ ! -d ~/build/picom ]; then
-        if ! git clone https://github.com/FT-Labs/picom.git ~/build/picom; then
+        if ! git clone https://github.com/ChrisTitusTech/picom.git ~/build/picom; then
             echo "Failed to clone the repository"
             return 1
         fi
