@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "latte";
             const default_dark_theme = "frappe";
-            window.path_to_searchindex_js = "searchindex-3d775476.js";
+            window.path_to_searchindex_js = "searchindex-4fab5756.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e4ab374d.js"></script>
@@ -177,7 +177,8 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="theming"><a class="header" href="#theming">Theming</a></h1>
-<p>Themes are defined in <code>config/themes.toml</code>. Change the active theme and <strong>save</strong> — dwm, terminal, and rofi update instantly. No restart needed.</p>
+<p>Themes are defined in <code>config/themes.toml</code>. Change the active theme and <strong>save</strong>
+to update dwm, terminal, GTK, and Qt styling. No restart needed.</p>
 <pre><code class="language-toml">[active]
 theme = "nord"   # ← change this line to switch themes
 </code></pre>
@@ -236,7 +237,6 @@ borderpx = 1   # 0 = no border, 1 = thin (default), 2-3 = thicker
 <tr><td><code>selfgcolor</code> / <code>selbgcolor</code> / <code>selbordercolor</code></td><td>Focused window and active tag</td></tr>
 <tr><td><code>term_bg</code> / <code>term_fg</code> / <code>term_cursor</code></td><td>Terminal background, text, cursor</td></tr>
 <tr><td><code>term_color0</code>–<code>term_color15</code></td><td>Full 16-color terminal palette</td></tr>
-<tr><td><code>rofi_theme</code></td><td>Rofi <code>.rasi</code> theme (filename without extension)</td></tr>
 <tr><td><code>dark_mode</code></td><td>GTK dark preference and Capitaine cursor variant (<code>true</code> / <code>false</code>)</td></tr>
 </tbody>
 </table>
@@ -255,9 +255,7 @@ selbordercolor  = "#89b4fa"
 term_bg         = "#1e1e2e"
 term_fg         = "#cdd6f4"
 term_cursor     = "#f5e0dc"
-# ... term_color0–15 ...
-
-rofi_theme      = "sidetab-catppuccin"
+# ... term_color0-15 ...
 dark_mode       = true
 </code></pre>
 <p>Then set <code>theme = "mytheme"</code> under <code>[active]</code> and save.</p>
@@ -265,9 +263,6 @@ dark_mode       = true
 <h2 id="applying-themes-via-control-center"><a class="header" href="#applying-themes-via-control-center">Applying Themes via Control Center</a></h2>
 <p>Open the Control Center with <kbd>Super</kbd> + <kbd>F1</kbd>, navigate to <strong>Appearance → Select Theme</strong>, and pick from the list. The theme switches immediately.</p>
 <hr>
-<h2 id="rofi-themes"><a class="header" href="#rofi-themes">Rofi Themes</a></h2>
-<p>Rofi theme files live in <code>config/rofi/themes/</code>. The active theme’s <code>rofi_theme</code> key selects which <code>.rasi</code> file is used.</p>
-<p>Available rofi themes: <code>nord</code>, <code>onedark</code>, <code>catppuccin</code>, <code>dracula</code>, <code>gruvbox</code>, <code>everforest</code>, <code>monochrome</code>, <code>rosepine</code>, <code>solarized</code>, <code>tokyonight</code>.</p>
 <h2 id="wallpapers"><a class="header" href="#wallpapers">Wallpapers</a></h2>
 <p>Place images in <code>~/Pictures/backgrounds/</code>. Use <code>Super</code> + <code>Shift</code> + <code>W</code> to randomize, or set a specific one:</p>
 <pre><code class="language-bash">feh --bg-fill ~/Pictures/backgrounds/mywall.jpg
