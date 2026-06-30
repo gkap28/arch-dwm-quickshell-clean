@@ -8,9 +8,22 @@
 network --bootproto=dhcp --activate
 
 firstboot --disable
+selinux --disabled
+
+url --metalink="https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch"
+repo --name="updates" --metalink="https://mirrors.fedoraproject.org/metalink?repo=updates-released-f$releasever&arch=$basearch" --install
+repo --name="fedora-cisco-openh264" --metalink="https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-free" --metalink="https://mirrors.rpmfusion.org/metalink?repo=free-fedora-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-free-updates" --metalink="https://mirrors.rpmfusion.org/metalink?repo=free-fedora-updates-released-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-free-tainted" --metalink="https://mirrors.rpmfusion.org/metalink?repo=free-fedora-tainted-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-nonfree" --metalink="https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-nonfree-updates" --metalink="https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-updates-released-$releasever&arch=$basearch" --install
+repo --name="rpmfusion-nonfree-tainted" --metalink="https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-tainted-$releasever&arch=$basearch" --install
+repo --name="brave-browser" --baseurl="https://brave-browser-rpm-release.s3.brave.com/$basearch" --install
+repo --name="mwt-packages" --baseurl="https://mirror.mwt.me/shiftkey-desktop/rpm" --install
 
 bootloader --location=mbr
-services --enabled=lightdm,NetworkManager
+services --enabled=NetworkManager
 
 %packages
 @core
@@ -43,6 +56,7 @@ xclip
 xdotool
 xprop
 xdg-utils
+quickshell
 lightdm
 slick-greeter
 alacritty
@@ -63,10 +77,27 @@ libnotify
 light-locker
 xorg-x11-drv-libinput
 dconf
+arc-theme
+adw-gtk3-theme
+numix-gtk-theme
+yaru-gtk3-theme
+yaru-gtk4-theme
+deepin-gtk-theme
+bluebird-gtk3-theme
+qt6ct
+qt5ct
 google-noto-color-emoji-fonts
 google-noto-sans-mono-fonts
 NetworkManager
 rsync
+Thunar
+gvfs
+tumbler
+thunar-archive-plugin
+file-roller
+xdg-user-dirs
+xdg-desktop-portal-gtk
+gnome-keyring
 %end
 
 %post --nochroot --erroronfail --log=/mnt/sysimage/root/dwm-titus-copy.log
@@ -91,6 +122,14 @@ if [ -z "$target_user" ]; then
 	exit 1
 fi
 
+for repo_key in \
+	https://raw.githubusercontent.com/rpmfusion/rpmfusion-free-release/master/RPM-GPG-KEY-rpmfusion-free-fedora-2020 \
+	https://raw.githubusercontent.com/rpmfusion/rpmfusion-nonfree-release/master/RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020 \
+	https://brave-browser-rpm-release.s3.brave.com/brave-core.asc \
+	https://mirror.mwt.me/shiftkey-desktop/gpgkey; do
+	rpm --import "$repo_key" || echo "Could not import repository key: $repo_key" >&2
+done
+
 target_home=$(getent passwd "$target_user" | cut -d: -f6)
 target_group=$(id -gn "$target_user")
 target_repo_dir="$target_home/.local/share/dwm-titus"
@@ -110,6 +149,10 @@ find /usr/share/wayland-sessions -mindepth 1 -maxdepth 1 -type f -delete 2>/dev/
 systemctl disable initial-setup.service initial-setup-graphical.service 2>/dev/null || true
 rm -f "$install_sudoers"
 rm -rf "$repo_dir"
+if ! systemctl list-unit-files lightdm.service >/dev/null 2>&1; then
+	echo "LightDM service was not installed." >&2
+	exit 1
+fi
 systemctl enable lightdm.service
 systemctl set-default graphical.target
 %end
