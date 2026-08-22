@@ -3273,15 +3273,11 @@ Layout *last_layout;
 void
 fullscreen(const Arg *arg)
 {
-	int monocle_pos = 0;
-	if (selmon->showbar || last_layout == NULL) {
-		for (monocle_pos = 0, last_layout = (Layout *)layouts; !last_layout->arrange || last_layout->arrange != &monocle; monocle_pos++, last_layout++ );
-		for (last_layout = (Layout *)layouts; last_layout != selmon->lt[selmon->sellt]; last_layout++);
-		setlayout(&((Arg) { .v = &layouts[monocle_pos] }));
-	} else {
-		setlayout(&((Arg) { .v = last_layout }));
-	}
-	togglebar(arg);
+	Client *c = selmon->sel;
+	if (!c)
+		return;
+
+	setfullscreen(c, !c->isfullscreen);
 }
 
 void
@@ -5427,83 +5423,96 @@ int
 getmonlogicalindex(Monitor *target)
 {
 	Monitor *m;
-	Monitor *primary = NULL;
+	Monitor *leftmost = NULL;
 	int index = 0;
-	
+
 	if (!target || monitorcount <= 1)
 		return 0;
-	
-	for (m = mons; m; m = m->next) {
-		if (m->my >= 1080) {
-			primary = m;
-			break;
-		}
-	}
-	
-	if (!primary) {
-		primary = mons;
-	}
-	
-	if (target == primary) {
-		return 0;
-	}
-	
-	index = 1;
-	for (m = mons; m; m = m->next) {
-		if (m == target)
-			return index;
-		if (m != primary)
-			index++;
-	}
-	
-	return index;
-}
 
+	/*
+	 * Die logische Reihenfolge wird anhand der X-Position
+	 * der Monitore bestimmt.
+	 *
+	 * Linker Monitor  = Index 0
+	 * Rechter Monitor = Index 1
+	 *
+	 * Damit ist die Zuordnung unabhängig von der internen
+	 * DWM-Monitornummer.
+	 */
+
+	for (m = mons; m; m = m->next) {
+		if (!leftmost || m->mx < leftmost->mx)
+			leftmost = m;
+	}
+
+	if (!leftmost)
+		return 0;
+
+	if (target == leftmost)
+		return 0;
+
+	for (m = mons; m; m = m->next) {
+		if (m == leftmost)
+			continue;
+
+		if (m == target)
+			return index + 1;
+
+		index++;
+	}
+
+	return 0;
+}
 unsigned int
 getmontagmask(int monnum)
 {
-	int tagspermon, start, end, i;
-	unsigned int mask = 0;
 	Monitor *m;
 	int logicalindex;
-	
-	/* Find monitor by num and get its logical index based on position */
-	for (m = mons; m; m = m->next) {
-		if (m->num == monnum) {
-			logicalindex = getmonlogicalindex(m);
-			break;
-		}
-	}
-	
-	if (!m) {
-		logicalindex = monnum;
-	}
-	
-	if (logicalindex < 0 || monitorcount <= 0)
-		return TAGMASK;
-		
+
+	/*
+	 * Feste Zuordnung:
+	 *
+	 * HDMI / linker Monitor      = Tags 1 2 3 4 5
+	 * DisplayPort / rechter Monitor = Tags 6 7 8 9 0
+	 *
+	 * Die Zuordnung erfolgt über die logische Position
+	 * des Monitors, nicht über m->num.
+	 */
+
+	updatemonitorcount();
+
 	if (monitorcount <= 1)
 		return TAGMASK;
-		
-	tagspermon = LENGTH(tags) / monitorcount;
-	if (tagspermon == 0) tagspermon = 1;
-	
-	start = logicalindex * tagspermon;
-	end = start + tagspermon;
-	
-	if (logicalindex == monitorcount - 1)
-		end = LENGTH(tags);
-	
-	if (start >= LENGTH(tags)) start = LENGTH(tags) - 1;
-	if (end > LENGTH(tags)) end = LENGTH(tags);
-	if (start >= end) {
-		return 1 << (monnum % LENGTH(tags));
+
+	for (m = mons; m; m = m->next) {
+		if (m->num == monnum)
+			break;
 	}
-	
-	for (i = start; i < end; i++)
-		mask |= 1 << i;
-	
-	return mask ? mask : (1 << (monnum % LENGTH(tags)));
+
+	if (!m)
+		return TAGMASK;
+
+	logicalindex = getmonlogicalindex(m);
+
+	if (logicalindex == 0) {
+		/* HDMI / linker Monitor: 1 2 3 4 5 */
+		return (1 << 0) |
+		       (1 << 1) |
+		       (1 << 2) |
+		       (1 << 3) |
+		       (1 << 4);
+	}
+
+	if (logicalindex == 1) {
+		/* DisplayPort / rechter Monitor: 6 7 8 9 0 */
+		return (1 << 5) |
+		       (1 << 6) |
+		       (1 << 7) |
+		       (1 << 8) |
+		       (1 << 9);
+	}
+
+	return TAGMASK;
 }
 
 /* Keep each monitor on tags owned by its current logical monitor index. */
