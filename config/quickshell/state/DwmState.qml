@@ -98,13 +98,13 @@ Scope {
             return 0;
         }
 
-        // HDMI-A-0 ist immer Monitor 0 / Primary.
-        if (screen.name === "HDMI-A-0") {
+        // Primary-Monitor
+        if (screen.name === "HDMI-1" || screen.name === "HDMI-A-0") {
             return 0;
         }
 
-        // DisplayPort-2 ist immer Monitor 1 / Secondary.
-        if (screen.name === "DisplayPort-2") {
+        // Secondary-Monitor
+        if (screen.name === "DP-3" || screen.name === "DisplayPort-2") {
             return 1;
         }
 

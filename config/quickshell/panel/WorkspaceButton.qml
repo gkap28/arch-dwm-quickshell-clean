@@ -34,8 +34,8 @@ Rectangle {
         height: 6
         radius: 1
         color: Theme.accent
-        anchors.right: parent.right
-        anchors.rightMargin: 0
+        anchors.left: parent.left
+        anchors.leftMargin: 0
         anchors.top: parent.top
         anchors.topMargin: 0
     }
