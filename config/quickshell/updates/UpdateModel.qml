@@ -63,25 +63,11 @@ Item {
         }
     }
 
-    property string installOutput: ""
-
     Process {
         id: updateInstallProcess
 
-        command: ["sudo", "-n", "stdbuf", "-oL", "-eL", "xbps-install", "-Suy"]
+        command: ["sudo", "-n", "xbps-install", "-Su"]
         running: false
-
-        stdout: SplitParser {
-            onRead: function(data) {
-                root.installOutput = root.installOutput + data + "\n"
-            }
-        }
-
-        stderr: SplitParser {
-            onRead: function(data) {
-                root.installOutput = root.installOutput + data + "\n"
-            }
-        }
 
         onRunningChanged: {
             if (!running) {
@@ -89,10 +75,6 @@ Item {
                 root.refresh()
             }
         }
-    }
-
-    function clearInstallOutput() {
-        root.installOutput = ""
     }
 
     function refresh() {
@@ -110,7 +92,6 @@ Item {
         if (root.updating) return
         root.updating = true
         root.detailVisible = true
-        root.installOutput = ""
         updateInstallProcess.running = true
     }
 
