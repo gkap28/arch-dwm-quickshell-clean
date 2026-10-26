@@ -51,6 +51,7 @@ ClickAwayPopup {
             anchors.margins: Theme.popupPadding
             spacing: Theme.popupSpacing
 
+            // Header
             Text {
                 Layout.fillWidth: true
                 text: "System-Updates"
@@ -60,23 +61,24 @@ ClickAwayPopup {
                 font.bold: true
             }
 
+            // Update-Zähler
             Text {
                 Layout.fillWidth: true
-                text: root.updateModel.updating ? "Installiere Updates..." :
-                      (root.updateModel.updateCount > 0 ? root.updateModel.updateCount + " Updates verfügbar" : "System ist aktuell ✓")
-                color: root.updateModel.updating ? Theme.accent :
-                       (root.updateModel.updateCount > 0 ? Theme.warning : Theme.success)
+                text: root.updateModel.updateCount + " Updates verfügbar"
+                color: root.updateModel.updateCount > 0 ? Theme.warning : Theme.success
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.bodyFontSize
                 font.bold: true
             }
 
+            // Trennlinie
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
                 color: Theme.border
             }
 
+            // Update-Liste
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -105,12 +107,14 @@ ClickAwayPopup {
                 }
             }
 
+            // Trennlinie
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
                 color: Theme.border
             }
 
+            // Buttons
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Theme.rowSpacing
@@ -119,8 +123,7 @@ ClickAwayPopup {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.buttonHeight
                     label: "Aktualisieren"
-                    enabled: !root.updateModel.updating
-                    onActivated: root.updateModel.installUpdates()
+                    onActivated: root.updateModel.refresh()
                 }
 
                 ShellButton {

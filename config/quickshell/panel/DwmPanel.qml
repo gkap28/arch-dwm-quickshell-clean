@@ -263,7 +263,7 @@ PanelWindow {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.updateModel.toggle()
+                                root.updateModel.refresh()
                             }
                         }
                     }
