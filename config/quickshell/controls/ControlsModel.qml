@@ -28,18 +28,32 @@ Scope {
     readonly property var audioSource: Pipewire.defaultAudioSource
 
     function refreshAudioStatus() {
-        // Immer das Skript verwenden, da Pipewire-Integration auf Void nicht funktioniert
-        root.volumeText = "VOL unavailable";
-        root.volumeMuted = false;
-        root.outputDeviceName = "";
-        root.outputDeviceDescription = "";
-        if (!volumeStatusProcess.running) {
-            volumeStatusProcess.running = true;
+        const sink = root.audioSink;
+
+        if (sink !== null && sink.ready && sink.audio !== null) {
+            root.volumePercent = root.clampPercent(sink.audio.volume * 100);
+            root.volumeMuted = sink.audio.muted;
+            root.volumeText = (root.volumeMuted ? "VOL muted " : "VOL ") + root.volumePercent.toString() + "%";
+            root.outputDeviceName = sink.name;
+            root.outputDeviceDescription = sink.description.length > 0 ? sink.description : sink.name;
+        } else {
+            root.volumeText = "VOL unavailable";
+            root.volumeMuted = false;
+            root.outputDeviceName = "";
+            root.outputDeviceDescription = "";
+            if (!volumeStatusProcess.running) {
+                volumeStatusProcess.running = true;
+            }
         }
 
-        root.micText = "MIC unavailable";
-        if (!micStatusProcess.running) {
-            micStatusProcess.running = true;
+        const source = root.audioSource;
+        if (source !== null && source.ready && source.audio !== null) {
+            root.micText = source.audio.muted ? "MIC muted" : "MIC on";
+        } else {
+            root.micText = "MIC unavailable";
+            if (!micStatusProcess.running) {
+                micStatusProcess.running = true;
+            }
         }
     }
 
@@ -303,7 +317,10 @@ Scope {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                root.parseVolume(this.text.length > 0 ? this.text : "VOL unavailable");
+                const sink = root.audioSink;
+                if (sink === null || !sink.ready || sink.audio === null) {
+                    root.parseVolume(this.text.length > 0 ? this.text : "VOL unavailable");
+                }
             }
         }
     }
