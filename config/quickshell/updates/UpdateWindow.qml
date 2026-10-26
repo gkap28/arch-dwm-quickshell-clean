@@ -71,50 +71,38 @@ ClickAwayPopup {
                 font.bold: true
             }
 
-            // ── Live-Ausgabe der Installation ─────────────────────────
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 200
-                visible: root.updateModel.installOutput.length > 0
+                Layout.preferredHeight: 80
+                visible: root.updateModel.updating
                 color: Theme.surface
                 radius: Theme.radius
                 border.color: Theme.border
                 border.width: 1
 
                 Flickable {
-                    id: outputFlick
                     anchors.fill: parent
                     anchors.margins: 6
                     contentWidth: width
                     contentHeight: installOutputText.implicitHeight
                     clip: true
-                    boundsBehavior: Flickable.StopAtBounds
 
                     Text {
                         id: installOutputText
-                        width: outputFlick.width
+                        width: parent.width
                         text: root.updateModel.installOutput || "Warte auf Ausgabe..."
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.smallFontSize
                         wrapMode: Text.Wrap
                     }
-
-                    // Auto-Scroll ans Ende, wenn neue Zeilen dazukommen
-                    onContentHeightChanged: {
-                        if (contentHeight > height) {
-                            contentY = contentHeight - height;
-                        }
-                    }
                 }
             }
 
-            // ── Update-Liste (nur sichtbar, wenn NICHT installiert wird) ──
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
                 color: Theme.border
-                visible: !root.updateModel.updating
             }
 
             ListView {
@@ -123,7 +111,6 @@ ClickAwayPopup {
                 clip: true
                 spacing: Theme.listSpacing
                 model: root.updateModel.updateList
-                visible: !root.updateModel.updating
 
                 delegate: Rectangle {
                     required property var modelData
@@ -159,8 +146,8 @@ ClickAwayPopup {
                 ShellButton {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.buttonHeight
-                    label: root.updateModel.updating ? "Läuft..." : "Aktualisieren"
-                    enabled: !root.updateModel.updating && root.updateModel.updateCount > 0
+                    label: "Aktualisieren"
+                    enabled: !root.updateModel.updating
                     onActivated: root.updateModel.installUpdates()
                 }
 
