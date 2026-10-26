@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
-import Quickshell.Io
 import qs.core
 
 pragma ComponentBehavior: Bound
@@ -375,46 +374,23 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        id: networkPill
                         visible: root.controlCenterModel.showNetworkWidget
-                        Layout.preferredWidth: 60
+                        Layout.preferredWidth: networkRow.implicitWidth + Theme.networkWidgetHorizontalPadding * 2
                         Layout.preferredHeight: Theme.compactWidgetSize
                         active: root.networkModel.visible
                         hovered: networkMouse.containsMouse
 
-                        property string speedText: "--"
-
-                        Process {
-                            id: netSpeedProc
-                            command: ["sh", "-c", "speedtest-cli --simple 2>/dev/null | grep Download | awk '{print $2}'"]
-                            running: false
-
-                            stdout: SplitParser {
-                                onRead: function(data) {
-                                    const cleaned = String(data).trim();
-                                    if (cleaned !== "") {
-                                        networkPill.speedText = cleaned + " Mbps";
-                                    }
-                                }
-                            }
-                        }
-
-                        Timer {
-                            interval: 600000
-                            running: true
-                            repeat: true
-                            onTriggered: netSpeedProc.running = true
-                        }
-
-                        Component.onCompleted: netSpeedProc.running = true
-
-                        UiText {
-                            id: netSpeedText
+                        RowLayout {
+                            id: networkRow
                             anchors.centerIn: parent
-                            text: "↓" + networkPill.speedText
-                            color: Theme.textStrong
-                            font.pixelSize: Theme.panelFontSize
-                            font.family: Theme.fontFamily
+                            spacing: Theme.compactSpacing
+
+                            IconText {
+                                text: root.networkModel.statusText.indexOf("offline") >= 0
+                                    || root.networkModel.statusText.indexOf("unavailable") >= 0 ? "󰤭" : "󰤨"
+                                color: Theme.textStrong
+                                font.pixelSize: Math.round((Theme.panelFontSize + 1) * 1.2)
+                            }
                         }
 
                         MouseArea {
