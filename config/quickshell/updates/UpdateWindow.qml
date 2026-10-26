@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.core
 
 pragma ComponentBehavior: Bound
@@ -30,6 +31,16 @@ ClickAwayPopup {
             Qt.callLater(function() {
                 content.forceActiveFocus();
             });
+        }
+    }
+
+    Process {
+        id: updateProc
+        running: false
+        onRunningChanged: {
+            if (!running) {
+                root.updateModel.refresh();
+            }
         }
     }
 
@@ -123,7 +134,13 @@ ClickAwayPopup {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.buttonHeight
                     label: "Aktualisieren"
-                    onActivated: root.updateModel.refresh()
+                    enabled: root.updateModel.updateCount > 0
+                    onActivated: {
+                        updateProc.command = ["alacritty", "-e", "bash", "-c",
+                            "sudo pacman -Syu && paru -Syu; echo; read -n 1 -s -r -p 'Enter zum Schliessen'"]
+                        updateProc.running = true
+                        root.updateModel.close()
+                    }
                 }
 
                 ShellButton {

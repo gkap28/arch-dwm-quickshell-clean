@@ -49,17 +49,16 @@ Item {
     Process {
         id: detailProcess
 
-        command: []
+        command: ["bash", "-c", "checkupdates 2>/dev/null | head -20; echo '--- AUR ---'; paru -Qua 2>/dev/null | head -10"]
         running: false
 
         stdout: StdioCollector {
             onStreamFinished: {
-                const output = this.text.trim()
-                if (output.length > 0) {
-                    root.updateList = output.split("\n")
-                } else {
-                    root.updateList = ["System ist aktuell"]
-                }
+                console.log("detailProcess output:", this.text)
+                const lines = this.text.split("\n")
+                    .map(function(l) { return l.trim(); })
+                    .filter(function(l) { return l.length > 0 && l.indexOf("--- AUR ---") === -1; })
+                root.updateList = lines.length > 0 ? lines : ["System ist aktuell"]
             }
         }
     }
@@ -71,7 +70,8 @@ Item {
     }
 
     function loadDetails() {
-        detailProcess.command = ["bash", "-c", "checkupdates 2>/dev/null | head -20; echo '--- AUR ---'; paru -Qua 2>/dev/null | head -10"]
+        console.log("loadDetails called, running:", detailProcess.running)
+        if (detailProcess.running) return
         detailProcess.running = true
     }
 
