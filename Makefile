@@ -24,6 +24,7 @@ OBJ = ${SRC:.c=.o}
 INSTALL_COMMANDS = \
 	scripts/active-audio \
 	scripts/check-deps.sh \
+	scripts/check-updates.sh \
 	scripts/disable-powersaving \
 	scripts/dwm-controlcenter \
 	scripts/dwm-default-apps \
@@ -216,7 +217,7 @@ install-user:
 	mkdir -p ${CFG_DIR}
 	for dir in config/*/; do \
 		b=$$(basename "$$dir"); \
-		if [ "$$b" = quickshell ]; then \
+		if [ "$$b" = quickshell ] || [ "$$b" = home ]; then \
 			continue; \
 		fi; \
 		dst=${CFG_DIR}/$$b; \
