@@ -17,7 +17,8 @@ Scope {
         "Volume": "volume",
         "Bluetooth": "bluetooth",
         "Network": "network",
-        "Power": "power"
+        "Power": "power",
+        "Clock Seconds": "clock-seconds"
     })
     readonly property bool showVolumeWidget: root.panelSettingsModel
         ? root.panelSettingsModel.widgetEnabled("volume") : true
@@ -29,6 +30,8 @@ Scope {
         ? root.panelSettingsModel.widgetEnabled("power") : true
     readonly property bool showWorkspaceWidget: root.panelSettingsModel
         ? root.panelSettingsModel.widgetEnabled("workspaces") : true
+    readonly property bool showClockSeconds: root.panelSettingsModel
+        ? root.panelSettingsModel.widgetEnabled("clock-seconds") : false
     property string message: ""
     property string pendingAction: ""
     property bool actionSucceeded: false

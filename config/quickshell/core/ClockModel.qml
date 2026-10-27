@@ -10,6 +10,7 @@ Scope {
     property string observedTimezone: ""
     property bool initialized: false
     property string panelText: ""
+    property bool showSeconds: false
     property string settingsText: ""
     property double timestamp: 0
 
@@ -19,7 +20,8 @@ Scope {
         // retains local wall-clock fields that Qt can reinterpret in a new zone.
         // Reassigning an equal date alone also cannot notify text bindings.
         const current = new Date(root.timestamp);
-        root.panelText = Qt.formatDateTime(current, "ddd dd MMM - HH:mm");
+        root.panelText = Qt.formatDateTime(current, root.showSeconds
+            ? "ddd dd MMM - HH:mm:ss" : "ddd dd MMM - HH:mm");
         root.settingsText = Qt.formatDateTime(current, "dddd, dd MMMM yyyy - HH:mm t");
     }
 
@@ -34,6 +36,7 @@ Scope {
     }
 
     onTimezoneStateChanged: root.refreshTimezone()
+    onShowSecondsChanged: root.refreshDisplay()
     Component.onCompleted: {
         root.timestamp = source.date.getTime();
         root.initialized = true;
@@ -43,7 +46,7 @@ Scope {
 
     SystemClock {
         id: source
-        precision: SystemClock.Minutes
+        precision: root.showSeconds ? SystemClock.Seconds : SystemClock.Minutes
         onDateChanged: {
             if (root.initialized) {
                 root.timestamp = source.date.getTime();

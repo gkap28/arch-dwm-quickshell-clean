@@ -23,7 +23,8 @@ Scope {
         "volume": true,
         "bluetooth": true,
         "network": true,
-        "power": true
+        "power": true,
+        "clock-seconds": false
     })
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string configuredConfigHome: Quickshell.env("XDG_CONFIG_HOME")
@@ -36,12 +37,13 @@ Scope {
         { "id": "volume", "label": "Volume" },
         { "id": "bluetooth", "label": "Bluetooth" },
         { "id": "network", "label": "Network" },
-        { "id": "power", "label": "Power" }
+        { "id": "power", "label": "Power" },
+        { "id": "clock-seconds", "label": "Clock Seconds" }
     ]
 
     function validWidget(id) {
         return id === "workspaces" || id === "volume" || id === "bluetooth"
-            || id === "network" || id === "power";
+            || id === "network" || id === "power" || id === "clock-seconds";
     }
 
     function widgetEnabled(id) {
@@ -70,14 +72,14 @@ Scope {
 
     function parseStatus(text) {
         const lines = text.trim().split("\n");
-        if (lines.length !== 8 || lines[0] !== "panel-settings-protocol\t1\t0"
-                || lines[7] !== "complete\tstatus") return;
+        if (lines.length !== 9 || lines[0] !== "panel-settings-protocol\t1\t0"
+                || lines[8] !== "complete\tstatus")) return;
         const state = lines[1].split("\t");
         if (state.length !== 3 || state[0] !== "state"
                 || ["available", "defaults", "partial", "unavailable"].indexOf(state[1]) < 0)
             return;
         const parsed = {};
-        for (let index = 2; index < 7; index++) {
+        for (let index = 2; index < 8; index++) {
             const fields = lines[index].split("\t");
             if (fields.length !== 3 || fields[0] !== "widget" || !root.validWidget(fields[1])
                     || (fields[2] !== "enabled" && fields[2] !== "disabled")

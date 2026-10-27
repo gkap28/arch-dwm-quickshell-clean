@@ -123,6 +123,7 @@ ShellRoot {
     ClockModel {
         id: clock
         timezoneState: systemManagementModel.nativeStates.timezone || null
+        showSeconds: controlCenterModel.showClockSeconds
     }
 
     LauncherModel {
