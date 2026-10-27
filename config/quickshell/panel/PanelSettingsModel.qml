@@ -73,7 +73,7 @@ Scope {
     function parseStatus(text) {
         const lines = text.trim().split("\n");
         if (lines.length !== 9 || lines[0] !== "panel-settings-protocol\t1\t0"
-                || lines[8] !== "complete\tstatus")) return;
+                || lines[8] !== "complete\tstatus") return;
         const state = lines[1].split("\t");
         if (state.length !== 3 || state[0] !== "state"
                 || ["available", "defaults", "partial", "unavailable"].indexOf(state[1]) < 0)
