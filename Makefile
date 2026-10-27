@@ -26,7 +26,11 @@ INSTALL_COMMANDS = \
 	scripts/check-deps.sh \
 	scripts/check-updates.sh \
 	scripts/disable-powersaving \
+	scripts/dwm-accessibility-settings \
+	scripts/dwm-arch-deps \
+	scripts/dwm-arch-updates \
 	scripts/dwm-controlcenter \
+	scripts/dwm-cursor-reload \
 	scripts/dwm-default-apps \
 	scripts/dwm-diagnostics \
 	scripts/dwm-display-profile \
@@ -34,24 +38,37 @@ INSTALL_COMMANDS = \
 	scripts/dwm-keybinds \
 	scripts/dwm-lock \
 	scripts/dwm-lock-watch \
+	scripts/dwm-panel-settings \
 	scripts/dwm-quickshell-launcher \
 	scripts/dwm-quickshell-controls \
 	scripts/dwm-quickshell-controlcenter \
 	scripts/dwm-quickshell-network \
+	scripts/dwm-quickshell-pointer \
 	scripts/dwm-quickshell-state \
 	scripts/dwm-quickshell-version-check \
+	scripts/dwm-session-launch \
 	scripts/dwm-status \
 	scripts/dwm-system-health \
+	scripts/dwm-system-management \
 	scripts/dwm-polkit \
 	scripts/dwm-packages.sh \
 	scripts/dwm-titus-release \
 	scripts/dwm-screenshot \
 	scripts/dwm-settings \
+	scripts/dwm-settings-appearance \
 	scripts/dwm-settings-display \
+	scripts/dwm-settings-display-profiles \
+	scripts/dwm-settings-font \
 	scripts/dwm-settings-input \
+	scripts/dwm-settings-personalization \
+	scripts/dwm-settings-picom \
 	scripts/dwm-settings-provider \
+	scripts/dwm-settings-theme \
+	scripts/dwm-settings-wallpaper \
 	scripts/dwm-terminal \
 	scripts/dwm-utils.sh \
+	scripts/dwm-xdg-autostart \
+	scripts/dwm-xsettings \
 	scripts/install-gearlever \
 	scripts/install-herdr \
 	scripts/nvidia-gpu \
@@ -159,7 +176,7 @@ install-system:
 		test -e "$$input" || { echo "dwm build input is missing: $$input. Run make before install-system." >&2; exit 1; }; \
 		test ! "$$input" -nt dwm || { echo "dwm is stale. Run make before install-system." >&2; exit 1; }; \
 	done
-	$(MAKE) install-cursors
+	$(MAKE) install-cursors install-app-themes
 	@echo ""
 	@echo "==> Installing system files..."
 	install -Dm755 dwm ${DESTDIR}${PREFIX}/bin/dwm
@@ -174,6 +191,21 @@ install-system:
 	for f in ${PRIVILEGED_HELPERS}; do \
 		sed "s|@PREFIX@|${PREFIX}|g" "$$f" | \
 			install -Dm755 /dev/stdin ${DESTDIR}${PRIVILEGED_HELPER_DIR}/$$(basename "$$f"); \
+	done
+
+install-app-themes:
+	@echo "==> Installing application themes..."
+	rm -rf "${DESTDIR}${DATADIR}/themes/"Dwm-*
+	rm -f "${DESTDIR}${DATADIR}/qt5ct/colors/"Dwm-*.conf "${DESTDIR}${DATADIR}/qt6ct/colors/"Dwm-*.conf
+	set -e; for theme in assets/themes/Dwm-*; do \
+		name=$$(basename "$$theme"); \
+		install -d -m755 "${DESTDIR}${DATADIR}/themes/$$name"; \
+		cp -a --no-preserve=ownership "$$theme/." "${DESTDIR}${DATADIR}/themes/$$name/"; \
+		find "${DESTDIR}${DATADIR}/themes/$$name" -type d -exec chmod 755 {} +; \
+		find "${DESTDIR}${DATADIR}/themes/$$name" -type f -exec chmod 644 {} +; \
+		for backend in qt5ct qt6ct; do \
+			install -Dm644 "$$theme/qt/colors.conf" "${DESTDIR}${DATADIR}/$$backend/colors/$$name.conf"; \
+		done; \
 	done
 
 install-cursors:
@@ -568,4 +600,4 @@ check:
 	check-gearlever-install check-herdr-install check-install-manifest check-install-preservation check-kickstart check-lock \
 	check-session-guards check-session-migration check-screenshot check-release-helper check-shell check-diagnostics check-status check-system-health check-settings \
 	check-quickshell-launcher check-quickshell-controls check-quickshell-controlcenter check-quickshell-design-system check-quickshell-notifications check-quickshell-tray check-quickshell-health-xvfb check-quickshell-settings-xvfb check-quickshell-network check-quickshell-qml check-lightdm-config check-terminal check-xvfb-runtime install install-system install-user \
-	install-cursors native release release-check uninstall
+	install-cursors install-app-themes native release release-check uninstall

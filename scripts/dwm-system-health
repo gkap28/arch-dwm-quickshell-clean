@@ -195,10 +195,27 @@ trusted_system_command() {
 	case $resolved in
 	"${HOME:-/nonexistent}"/* | "${XDG_DATA_HOME:-${HOME:-/nonexistent}/.local/share}"/* | "${XDG_CONFIG_HOME:-${HOME:-/nonexistent}/.config}"/*) return 1 ;;
 	esac
+	trusted_parent_chain "$resolved" || return 1
 	owner=$(stat -c %u -- "$resolved" 2>/dev/null || printf 1)
 	[[ $owner == 0 ]] || return 1
 	find "$resolved" -maxdepth 0 -type f ! -perm /022 -print -quit 2>/dev/null | grep -q . || return 1
 	printf '%s\n' "$resolved"
+}
+
+trusted_parent_chain() {
+	local candidate=$1
+	local parent=${candidate%/*}
+	local owner
+
+	while :; do
+		[[ -d $parent && ! -L $parent ]] || return 1
+		owner=$(stat -c %u -- "$parent" 2>/dev/null || printf 1)
+		[[ $owner == 0 ]] || return 1
+		find "$parent" -maxdepth 0 -type d ! -perm /022 -print -quit 2>/dev/null | grep -q . || return 1
+		[[ $parent == / ]] && return 0
+		parent=${parent%/*}
+		[[ -n $parent ]] || parent=/
+	done
 }
 
 privilege_mode() {
@@ -458,12 +475,12 @@ scan_desktop() {
 		if quickshell_compatible "$version" "$detail"; then
 			emit_check desktop ok quickshell-version "Quickshell" "Available" "$detail" restart-quickshell "Restart Quickshell" user
 		elif [[ -n $version ]]; then
-			emit_check desktop error quickshell-version "Quickshell" "Outdated" "$detail; version 0.3.0 or the supported Fedora 44 snapshot is required" install-dependencies "Open dependency installer" user
+			emit_check desktop error quickshell-version "Quickshell" "Outdated" "$detail; version 0.3.0 with PopupWindow.grabFocus support is required" install-dependencies "Open dependency installer" user
 		else
-			emit_check desktop error quickshell-version "Quickshell" "Version unavailable" "Could not verify Quickshell 0.3.0 or the supported Fedora 44 snapshot" install-dependencies "Open dependency installer" user
+			emit_check desktop error quickshell-version "Quickshell" "Version unavailable" "Could not verify Quickshell 0.3.0 with PopupWindow.grabFocus support" install-dependencies "Open dependency installer" user
 		fi
 	else
-		emit_check desktop error quickshell-version "Quickshell" "Missing" "The managed shell requires Quickshell 0.3.0 or the supported Fedora 44 snapshot" install-dependencies "Open dependency installer" user
+		emit_check desktop error quickshell-version "Quickshell" "Missing" "The managed shell requires Quickshell 0.3.0 with PopupWindow.grabFocus support" install-dependencies "Open dependency installer" user
 	fi
 
 	if command -v picom >/dev/null 2>&1; then
@@ -538,27 +555,27 @@ scan_package_database() {
 		source "$os_file"
 		id=${ID:-unknown}
 	fi
-	[[ $id == fedora ]] && family=fedora
+	[[ $id == arch ]] && family=arch
 
 	case $family in
-	fedora)
-		if command -v dnf >/dev/null 2>&1; then
-			if ! output=$(run_bounded dnf -q --cacheonly check 2>&1); then
+	arch)
+		if command -v pacman >/dev/null 2>&1; then
+			if ! output=$(run_bounded pacman -Dk 2>&1); then
 				status=warn
 			fi
 		else
-			output="dnf is unavailable"
+			output="pacman is unavailable"
 			status=restricted
 		fi
 		;;
 	*)
-		emit_check dependencies info package-database "Package database" "Fedora is required for package validation" "$id"
+		emit_check dependencies info package-database "Package database" "Arch Linux is required for package validation" "$id"
 		return
 		;;
 	esac
 
 	if [[ $status == ok ]]; then
-		emit_check dependencies ok package-database "Package database" "No consistency problems reported" "$family package audit"
+		emit_check dependencies ok package-database "Package database" "No consistency problems reported" "pacman database check"
 	else
 		emit_check dependencies "$status" package-database "Package database" "Package audit needs attention" "$(first_lines 20 <<<"$output")"
 	fi
@@ -772,6 +789,7 @@ trusted_system_helper() {
 		case $resolved in
 		"${HOME:-/nonexistent}"/* | "${XDG_DATA_HOME:-${HOME:-/nonexistent}/.local/share}"/* | "${XDG_CONFIG_HOME:-${HOME:-/nonexistent}/.config}"/*) continue ;;
 		esac
+		trusted_parent_chain "$resolved" || continue
 		owner=$(stat -c %u -- "$resolved" 2>/dev/null || printf 1)
 		[[ $owner == 0 ]] || continue
 		find "$resolved" -maxdepth 0 -type f ! -perm /022 -print -quit 2>/dev/null | grep -q . || continue

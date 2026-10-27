@@ -5,6 +5,7 @@ Scope {
     id: root
 
     property int currentWorkspace: 0
+    property int focusedMonitorIndex: -1
     property var monitorWorkspaceRows: []
     property var workspaceNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
     property var occupiedWorkspaces: []
@@ -50,6 +51,10 @@ Scope {
                     });
                 }
                 root.monitorWorkspaceRows = rows;
+            } else if (key === "focused_monitor") {
+                const parsed = parseInt(value, 10);
+
+                root.focusedMonitorIndex = isNaN(parsed) ? -1 : parsed;
             } else if (key === "names") {
                 root.workspaceNames = value.length > 0 ? value.split("|") : [];
             } else if (key === "monitor_occupied") {
@@ -87,32 +92,81 @@ Scope {
     function workspaceOccupiedForScreen(screen, index) {
         const logicalIndex = root.screenIndex(screen);
         if (logicalIndex < 0 || logicalIndex >= root.monitorOccupied.length) {
-            return false;
+            return root.workspaceOccupied(index);
         }
         const mask = root.monitorOccupied[logicalIndex];
         return (mask & (1 << index)) !== 0;
     }
 
     function screenIndex(screen) {
-        if (!screen) {
-            return 0;
+        const pixelRatio = screen && screen.devicePixelRatio > 0
+            ? screen.devicePixelRatio : 1;
+        const pixelX = screen ? Math.round(screen.x) : 0;
+        const pixelY = screen ? Math.round(screen.y) : 0;
+        const pixelWidth = screen ? Math.round(screen.width * pixelRatio) : 0;
+        const pixelHeight = screen ? Math.round(screen.height * pixelRatio) : 0;
+
+        for (let index = 0; index < root.monitorWorkspaceRows.length; index++) {
+            const row = root.monitorWorkspaceRows[index];
+            const logicalMatch = screen && row.x === screen.x && row.y === screen.y
+                && row.width === screen.width && row.height === screen.height;
+            const pixelMatch = screen && row.x === pixelX && row.y === pixelY
+                && row.width === pixelWidth && row.height === pixelHeight;
+
+            if (logicalMatch || pixelMatch) {
+                return index;
+            }
         }
 
-        // Primary-Monitor
-        if (screen.name === "HDMI-1" || screen.name === "HDMI-A-0") {
-            return 0;
-        }
-
-        // Secondary-Monitor
-        if (screen.name === "DP-3" || screen.name === "DisplayPort-2") {
-            return 1;
+        for (let index = 0; index < Quickshell.screens.length; index++) {
+            if (Quickshell.screens[index] === screen
+                    || (screen && Quickshell.screens[index].name === screen.name)) {
+                return index;
+            }
         }
 
         return 0;
     }
 
+    function screenForMonitorIndex(monitorIndex) {
+        if (monitorIndex < 0 || monitorIndex >= root.monitorWorkspaceRows.length) {
+            return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
+        }
+
+        const row = root.monitorWorkspaceRows[monitorIndex];
+        for (let screenIndex = 0; screenIndex < Quickshell.screens.length; screenIndex++) {
+            const screen = Quickshell.screens[screenIndex];
+            const pixelRatio = screen.devicePixelRatio > 0 ? screen.devicePixelRatio : 1;
+            const logicalMatch = row.x === screen.x && row.y === screen.y
+                && row.width === screen.width && row.height === screen.height;
+            const pixelMatch = row.x === Math.round(screen.x) && row.y === Math.round(screen.y)
+                && row.width === Math.round(screen.width * pixelRatio)
+                && row.height === Math.round(screen.height * pixelRatio);
+
+            if (logicalMatch || pixelMatch) return screen;
+        }
+
+        return monitorIndex < Quickshell.screens.length
+            ? Quickshell.screens[monitorIndex]
+            : (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null);
+    }
+
+    function focusedScreen() {
+        if (root.focusedMonitorIndex >= 0) {
+            return root.screenForMonitorIndex(root.focusedMonitorIndex);
+        }
+
+        for (let index = 0; index < root.monitorWorkspaceRows.length; index++) {
+            if (root.monitorWorkspaceRows[index].desktop === root.currentWorkspace) {
+                return root.screenForMonitorIndex(index);
+            }
+        }
+
+        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
+    }
+
     function workspaceIndexes(screen) {
-        // Jeder Monitor hat alle 9 Workspaces (1-9)
+        // This Arch setup exposes all nine workspaces on every monitor.
         const indexes = [];
         for (let index = 0; index < 9 && index < root.workspaceNames.length; index++) {
             indexes.push(index);

@@ -36,7 +36,9 @@ Rectangle {
     Layout.preferredWidth: Theme.trayItemSize
     Layout.preferredHeight: Theme.trayItemSize
     radius: Theme.smallRadius
-    color: trayMouse.containsMouse ? Theme.surfaceHover : "transparent"
+    color: trayMouse.containsMouse ? Theme.controlHoverFill : Theme.transparent
+    border.color: trayMouse.containsMouse ? Theme.controlHoverBorder : Theme.transparent
+    border.width: trayMouse.containsMouse ? Theme.pillBorderWidth : 0
 
     QsMenuAnchor {
         id: trayMenu
@@ -71,7 +73,7 @@ Rectangle {
             const title = root.trayItem.tooltipTitle || root.trayItem.title || root.trayItem.id || "?";
             return title.length > 0 ? title.charAt(0).toUpperCase() : "?";
         }
-        color: Theme.text
+        color: trayMouse.containsMouse ? Theme.controlHoverText : Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.tinyFontSize
         font.bold: true

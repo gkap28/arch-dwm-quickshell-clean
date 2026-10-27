@@ -11,6 +11,8 @@ This repository is my own development and adaptation. It is not the original
 
 - dwm-based X11 desktop
 - Quickshell integration
+- Current dwm-titus Control Center and Settings adapted for Arch Linux
+- Pacman updates with optional paru/yay support in a visible terminal
 - Dual-monitor support
 - Workspace-to-monitor mapping
 - Custom themes and desktop styling
@@ -29,8 +31,8 @@ This repository is my own development and adaptation. It is not the original
 ## Installation
 Clone the repository:
 
-git clone git@github.com:gkap28/gkap28-arch-dwm-quickshell.git
-cd gkap28-arch-dwm-quickshell
+git clone https://github.com/gkap28/arch-dwm-quickshell-clean.git
+cd arch-dwm-quickshell-clean
 
 Build and install:
 

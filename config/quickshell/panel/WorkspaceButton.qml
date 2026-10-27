@@ -13,31 +13,21 @@ Rectangle {
     Layout.preferredWidth: Theme.workspaceButtonSize
     Layout.preferredHeight: Theme.workspaceButtonSize
     radius: Theme.smallRadius
-    color: Theme.transparent
-    border.color: selected ? Theme.accent : Theme.transparent
-    border.width: selected ? Theme.pillBorderWidth : 0
+    color: selected ? Theme.controlSelectedFill
+        : workspaceMouse.containsMouse ? Theme.controlHoverFill : Theme.transparent
+    border.color: selected ? Theme.controlSelectedBorder
+        : workspaceMouse.containsMouse ? Theme.controlHoverBorder : Theme.transparent
+    border.width: selected || workspaceMouse.containsMouse ? Theme.pillBorderWidth : 0
 
     Text {
         anchors.centerIn: parent
         text: root.label
-        color: root.selected ? Theme.accent : (root.occupied ? Theme.text : Theme.textMuted)
+        color: root.selected ? Theme.controlSelectedText
+            : workspaceMouse.containsMouse ? Theme.controlHoverText : Theme.textMuted
         font.family: Theme.fontFamily
         font.pixelSize: Theme.panelFontSize
         font.bold: root.selected
         verticalAlignment: Text.AlignVCenter
-    }
-
-    // Belegt-Indikator (nur für nicht-ausgewählte Workspaces)
-    Rectangle {
-        visible: root.occupied && !root.selected
-        width: 6
-        height: 6
-        radius: 1
-        color: Theme.accent
-        anchors.left: parent.left
-        anchors.leftMargin: 0
-        anchors.top: parent.top
-        anchors.topMargin: 0
     }
 
     MouseArea {

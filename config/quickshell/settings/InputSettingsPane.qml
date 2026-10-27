@@ -27,9 +27,9 @@ Flickable {
             Layout.fillWidth: true
             Layout.preferredHeight: root.settingsModel.previewKind === "input" ? 48 : 0
             visible: root.settingsModel.previewKind === "input"
-            color: Theme.surfaceHover
+            color: Theme.controlHoverFill
             border.color: Theme.warning
-            radius: Theme.radius
+            radius: Theme.largeSurfaceCardRadius
             RowLayout {
                 anchors.fill: parent; anchors.margins: 7
 				Text {
@@ -40,8 +40,9 @@ Flickable {
 					elide: Text.ElideRight
 					color: Theme.textStrong
 					font.family: Theme.fontFamily
+					font.pixelSize: Theme.bodyFontSize
 				}
-                ShellButton { label: "Keep"; onActivated: root.settingsModel.keepPreview("") }
+                ShellButton { label: "Keep"; onActivated: root.settingsModel.keepPreview() }
                 ShellButton { label: "Revert"; danger: true; onActivated: root.settingsModel.revertPreview() }
             }
         }
@@ -56,14 +57,33 @@ Flickable {
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: deviceColumn.implicitHeight + 20
-                color: Theme.bg
-                border.color: Theme.border
-                radius: Theme.radius
+                color: Theme.controlNormalFill
+                border.color: Theme.controlNormalBorder
+                radius: Theme.largeSurfaceCardRadius
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: 4
+                    color: Theme.accentSecondary
+                    radius: 2
+                }
 
                 ColumnLayout {
                     id: deviceColumn
-                    anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
-                    Text { text: deviceCard.modelData.name + " (" + deviceCard.modelData.kind + ")"; color: Theme.textStrong; font.family: Theme.fontFamily; font.bold: true }
+                    anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                    anchors.leftMargin: 16; anchors.rightMargin: 10; anchors.topMargin: 10
+                    Text { text: deviceCard.modelData.name + " (" + deviceCard.modelData.kind + ")"; color: Theme.textStrong; font.family: Theme.fontFamily; font.pixelSize: Theme.bodyFontSize; font.bold: true }
+                    Text {
+                        Layout.fillWidth: true
+                        visible: deviceCard.modelData.kind === "accessibility"
+                        text: "Session-wide XKB controls use a 15-second preview. Keep the change to restore it at the next login."
+                        color: Theme.textMuted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.smallFontSize
+                        wrapMode: Text.WordWrap
+                    }
                     Repeater {
                         model: deviceCard.settings
                         delegate: RowLayout {
@@ -73,20 +93,32 @@ Flickable {
                             property string editValue: modelData.value
                             onModelDataChanged: editValue = modelData.value
 
-                            Text { Layout.preferredWidth: 150; text: settingRow.modelData.label; color: Theme.text; font.family: Theme.fontFamily }
+                            Text {
+                                Layout.preferredWidth: 150
+                                Layout.maximumWidth: 150
+                                text: settingRow.modelData.label
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.bodyFontSize
+                                wrapMode: Text.WordWrap
+                            }
                             ShellButton {
                                 visible: settingRow.modelData.type === "boolean"
                                 label: settingRow.modelData.value === "1" ? "On" : "Off"
+                                accessibleDescription: settingRow.modelData.label + ". Starts a timed preview."
                                 enabled: !root.settingsModel.previewOperationLocked
                                 onActivated: root.settingsModel.previewInput(deviceCard.modelData.key, settingRow.modelData.id, settingRow.modelData.value === "1" ? "0" : "1")
                             }
                             Rectangle {
                                 visible: settingRow.modelData.type !== "boolean"
-                                Layout.fillWidth: true; Layout.preferredHeight: 32; color: Theme.surface; border.color: Theme.border; radius: Theme.radius
-                                TextInput { anchors.fill: parent; anchors.margins: 7; text: settingRow.editValue; color: Theme.textStrong; font.family: Theme.fontFamily; onTextEdited: settingRow.editValue = text }
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.max(Theme.controlRowHeight,
+                                    settingInput.implicitHeight + 14)
+                                color: Theme.controlNormalFill; border.color: Theme.controlNormalBorder; radius: Theme.controlRadius
+                                TextInput { id: settingInput; anchors.fill: parent; anchors.margins: 7; text: settingRow.editValue; color: Theme.textStrong; font.family: Theme.fontFamily; font.pixelSize: Theme.inputFontSize; onTextEdited: settingRow.editValue = text }
                             }
-                            ShellButton { visible: settingRow.modelData.type !== "boolean"; label: "Preview"; enabled: !root.settingsModel.previewOperationLocked; onActivated: root.settingsModel.previewInput(deviceCard.modelData.key, settingRow.modelData.id, settingRow.editValue) }
-                            ShellButton { label: "Reset"; enabled: !root.settingsModel.previewOperationLocked; onActivated: root.settingsModel.resetInput(deviceCard.modelData.key, settingRow.modelData.id) }
+                            ShellButton { visible: settingRow.modelData.type !== "boolean"; label: "Preview"; accessibleDescription: settingRow.modelData.label; enabled: !root.settingsModel.previewOperationLocked; onActivated: root.settingsModel.previewInput(deviceCard.modelData.key, settingRow.modelData.id, settingRow.editValue) }
+                            ShellButton { label: "Reset"; accessibleDescription: settingRow.modelData.label; enabled: !root.settingsModel.previewOperationLocked; onActivated: root.settingsModel.resetInput(deviceCard.modelData.key, settingRow.modelData.id) }
                         }
                     }
                     Repeater {
@@ -109,7 +141,7 @@ Flickable {
             Layout.fillWidth: true
             visible: root.settingsModel.inputDevices.length === 0
             text: root.settingsModel.inputState === "loading" ? "Discovering input devices..." : "No supported XInput devices were found"
-            color: Theme.textMuted; font.family: Theme.fontFamily; wrapMode: Text.WordWrap
+            color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: Theme.bodyFontSize; wrapMode: Text.WordWrap
         }
     }
 }

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+packages=(
+	quickshell picom feh xclip xdotool maim dex
+	xorg-xrandr xorg-xset xorg-xsetroot xorg-xinput xorg-xprop
+	alsa-utils pipewire pipewire-pulse wireplumber pavucontrol
+	networkmanager bluez bluez-utils blueman upower brightnessctl
+	pacman-contrib xsettingsd accountsservice cups system-config-printer
+)
+commands=(
+	quickshell picom feh xclip xdotool xrandr xset xsetroot xinput xprop
+	amixer wpctl nmcli bluetoothctl blueman-applet checkupdates
+)
+
+check() {
+	local missing=0 command_name
+	printf '%s\n' 'Arch Linux Control-Center-Abhängigkeiten' '' 
+	for command_name in "${commands[@]}"; do
+		if command -v "$command_name" >/dev/null 2>&1; then
+			printf '  OK       %s\n' "$command_name"
+		else
+			printf '  FEHLT    %s\n' "$command_name"
+			missing=$((missing + 1))
+		fi
+	done
+	printf '\n'
+	if ((missing > 0)); then
+		printf '%s\n' "$missing Befehle fehlen. Installation im Control Center: Install Missing Deps."
+		return 1
+	fi
+	printf '%s\n' 'Alle geprüften Control-Center-Befehle sind vorhanden.'
+}
+
+install() {
+	if ! command -v pacman >/dev/null 2>&1; then
+		printf '%s\n' 'dwm-arch-deps: pacman wurde nicht gefunden.' >&2
+		exit 127
+	fi
+	printf '%s\n' 'Pacman installiert fehlende Control-Center-Pakete. Bestätigung und sudo-Passwort werden im Terminal abgefragt.' ''
+	sudo pacman -S --needed "${packages[@]}"
+}
+
+case ${1:-} in
+	check) check ;;
+	install) install ;;
+	*)
+		printf 'usage: %s check|install\n' "$0" >&2
+		exit 2
+		;;
+esac

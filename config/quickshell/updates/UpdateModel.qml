@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.core
 
 pragma ComponentBehavior: Bound
 
@@ -12,7 +13,6 @@ Item {
     property bool checking: false
     property bool detailVisible: false
 
-    // Timer für automatische Aktualisierung (alle 30 Minuten)
     Timer {
         interval: 1800000
         running: true
@@ -20,74 +20,79 @@ Item {
         onTriggered: root.refresh()
     }
 
-    // Initial laden
-    Component.onCompleted: {
-        root.refresh()
-    }
+    Component.onCompleted: root.refresh()
 
     Process {
-        id: updateProcess
+        id: countProcess
 
-        command: ["/usr/local/bin/check-updates.sh"]
+        command: Commands.archUpdatesCommand("count")
         running: false
 
         stdout: StdioCollector {
             onStreamFinished: {
-                const output = this.text.trim()
-                root.updateCount = parseInt(output) || 0
-                console.log("Update-Count:", root.updateCount)
+                const output = this.text.trim();
+                root.updateCount = parseInt(output, 10) || 0;
             }
         }
 
         onRunningChanged: {
-            if (!running) {
-                root.checking = false
-            }
+            if (!running) root.checking = false;
         }
     }
 
     Process {
         id: detailProcess
 
-        command: ["bash", "-c", "checkupdates 2>/dev/null | head -20; echo '--- AUR ---'; paru -Qua 2>/dev/null | head -10"]
+        command: Commands.archUpdatesCommand("list")
         running: false
 
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("detailProcess output:", this.text)
                 const lines = this.text.split("\n")
-                    .map(function(l) { return l.trim(); })
-                    .filter(function(l) { return l.length > 0 && l.indexOf("--- AUR ---") === -1; })
-                root.updateList = lines.length > 0 ? lines : ["System ist aktuell"]
+                    .map(function(line) { return line.trim(); })
+                    .filter(function(line) { return line.length > 0; });
+                root.updateList = lines.length > 0 ? lines : ["System ist aktuell"];
             }
         }
     }
 
-    function refresh() {
-        if (root.checking) return
-        root.checking = true
-        updateProcess.running = true
-    }
+    Process {
+        id: applyProcess
 
-    function loadDetails() {
-        console.log("loadDetails called, running:", detailProcess.running)
-        if (detailProcess.running) return
-        detailProcess.running = true
-    }
-
-    function toggle() {
-        detailVisible = !detailVisible
-        if (detailVisible) {
-            root.loadDetails()
+        command: Commands.archUpdatesCommand("update")
+        running: false
+        onRunningChanged: {
+            if (!running) root.refresh();
         }
     }
 
+    function refresh() {
+        if (root.checking) return;
+        root.checking = true;
+        countProcess.running = true;
+    }
+
+    function loadDetails() {
+        if (!detailProcess.running) detailProcess.running = true;
+    }
+
+    function update() {
+        if (applyProcess.running) return;
+        root.close();
+        applyProcess.running = true;
+    }
+
+    function toggle() {
+        detailVisible = !detailVisible;
+        if (detailVisible) root.loadDetails();
+    }
+
     function close() {
-        detailVisible = false
+        detailVisible = false;
     }
 
     function open() {
-        detailVisible = true
-        root.loadDetails()
+        detailVisible = true;
+        root.loadDetails();
     }
 }

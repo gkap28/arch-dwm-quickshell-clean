@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+aur_helper() {
+	if command -v paru >/dev/null 2>&1; then
+		printf '%s\n' paru
+	elif command -v yay >/dev/null 2>&1; then
+		printf '%s\n' yay
+	else
+		return 1
+	fi
+}
+
+pacman_list() {
+	if command -v checkupdates >/dev/null 2>&1; then
+		checkupdates 2>/dev/null || true
+	fi
+}
+
+aur_list() {
+	local helper
+	if helper=$(aur_helper); then
+		"$helper" -Qua 2>/dev/null || true
+	fi
+}
+
+count_lines() {
+	awk 'NF { count++ } END { print count + 0 }'
+}
+
+open_update_terminal() {
+	local helper command terminal
+	helper=$(aur_helper || true)
+	command='sudo pacman -Syu'
+	if [[ -n $helper ]]; then
+		command+=" && $helper -Syu"
+	fi
+	command+=$'; status=$?; printf "\\nUpdate beendet (Status %s). Enter schliesst das Fenster." "$status"; read -r _; exit "$status"'
+
+	if ! terminal=$(command -v dwm-terminal 2>/dev/null); then
+		printf '%s\n' 'dwm-arch-updates: dwm-terminal wurde nicht gefunden.' >&2
+		exit 127
+	fi
+
+	nohup "$terminal" -e bash -lc "$command" >/dev/null 2>&1 &
+}
+
+case ${1:-} in
+	count)
+		pacman_count=$(pacman_list | count_lines)
+		aur_count=$(aur_list | count_lines)
+		printf '%s\n' "$((pacman_count + aur_count))"
+		;;
+	list)
+		pacman=$(pacman_list)
+		aur=$(aur_list)
+		if [[ -n $pacman ]]; then
+			printf '%s\n' "$pacman"
+		fi
+		if [[ -n $aur ]]; then
+			[[ -z $pacman ]] || printf '%s\n' '--- AUR ---'
+			printf '%s\n' "$aur"
+		fi
+		if [[ -z $pacman && -z $aur ]]; then
+			printf '%s\n' 'System ist aktuell'
+		fi
+		;;
+	update)
+		open_update_terminal
+		;;
+	*)
+		printf 'usage: %s count|list|update\n' "$0" >&2
+		exit 2
+		;;
+esac

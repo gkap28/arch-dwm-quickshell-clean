@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import qs.core
 
 pragma ComponentBehavior: Bound
@@ -11,7 +10,6 @@ PanelWindow {
     id: root
 
     signal popupRequested(var panelWindow, string popupId)
-
     function batteryIcon(percent, status) {
         if (status.toLowerCase() === "charging") {
             return "󰂄";
@@ -31,14 +29,16 @@ PanelWindow {
 
     required property var state
     required property var clock
+    required property var updateModel
+    required property var weatherModel
+    required property var layoutModel
     required property var networkModel
     required property var controlsModel
     required property var bluetoothModel
     required property var controlCenterModel
+    required property var panelSettingsModel
+    required property var powerModel
     required property var powerMenuModel
-    required property var weatherModel
-    required property var updateModel
-    required property var layoutModel
     required property bool primaryPanel
 
     implicitHeight: Theme.panelHeight
@@ -68,6 +68,11 @@ PanelWindow {
 
         PillShadow { cornerRadius: island.radius }
 
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.popupRequested(root, "")
+        }
+
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: Theme.panelGap
@@ -95,7 +100,7 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        visible: root.controlCenterModel.showWorkspaceWidget
+                        visible: root.panelSettingsModel.widgetEnabled("workspaces")
                         Layout.preferredWidth: workspaceRow.implicitWidth + 8
                         Layout.preferredHeight: Theme.pillHeight
 
@@ -123,6 +128,7 @@ PanelWindow {
                     PanelPill {
                         Layout.preferredWidth: Math.min(activeTitle.implicitWidth + Theme.pillHorizontalPadding * 2, 260)
                         Layout.preferredHeight: Theme.pillHeight
+                        outlined: true
 
                         UiText {
                             id: activeTitle
@@ -139,27 +145,20 @@ PanelWindow {
                 }
             }
 
-           PanelPill {
+            PanelPill {
                 Layout.preferredWidth: clockLabel.implicitWidth + Theme.pillHorizontalPadding * 2
                 Layout.preferredHeight: Theme.pillHeight
+                outlined: true
 
-            UiText {
-              id: clockLabel
-              anchors.centerIn: parent
-              text: Qt.formatDateTime(new Date(), "ddd dd MMM - HH:mm:ss")
-              color: Theme.textStrong
-              font.bold: true
-        }
+                UiText {
+                    id: clockLabel
 
-            Timer {
-                interval: 1000
-                running: true
-                repeat: true
-                onTriggered: {
-                clockLabel.text = Qt.formatDateTime(new Date(), "ddd dd MMM - HH:mm:ss")
+                    anchors.centerIn: parent
+                    text: root.clock.panelText
+                    color: Theme.textStrong
+                    font.bold: true
                 }
             }
-        }
 
             Item {
                 Layout.fillWidth: true
@@ -179,6 +178,7 @@ PanelWindow {
                             required property string modelData
                             Layout.preferredWidth: statusLabel.implicitWidth + Theme.pillHorizontalPadding * 2
                             Layout.preferredHeight: Theme.pillHeight
+                            outlined: true
 
                             UiText {
                                 id: statusLabel
@@ -188,8 +188,6 @@ PanelWindow {
                             }
                         }
                     }
-
-                    // RunningAppsArea deaktiviert
 
                     // Layout-Widget - vor dem Update-Widget
                     PanelPill {
@@ -263,7 +261,8 @@ PanelWindow {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.updateModel.toggle()
+                                root.popupRequested(root, "updates");
+                                root.updateModel.toggle();
                             }
                         }
                     }
@@ -306,6 +305,7 @@ PanelWindow {
                         }
                     }
 
+
                     Loader {
                         active: root.primaryPanel
                         sourceComponent: TrayArea {}
@@ -313,9 +313,10 @@ PanelWindow {
 
                     PanelPill {
                         id: batteryPill
-                        visible: root.state.batteryAvailable
+                        visible: root.powerModel.batteryAvailable
                         Layout.preferredWidth: batteryRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
                         Layout.preferredHeight: Theme.compactWidgetSize
+                        hovered: batteryMouse.containsMouse
 
                         RowLayout {
                             id: batteryRow
@@ -323,13 +324,13 @@ PanelWindow {
                             spacing: Theme.compactSpacing
 
                             IconText {
-                                text: root.batteryIcon(root.state.batteryPercent, root.state.batteryStatus)
+                                text: root.batteryIcon(root.powerModel.batteryPercent, root.powerModel.batteryStatus)
                                 color: Theme.textStrong
-                                font.pixelSize: Math.round((Theme.panelFontSize + 1) * 1.1)
+                                font.pixelSize: Theme.scaledFontSize(14 * 1.1, 8)
                             }
 
                             UiText {
-                                text: root.state.batteryPercent.toString() + "%"
+                                text: root.powerModel.batteryPercent.toString() + "%"
                                 color: Theme.textStrong
                                 font.pixelSize: Theme.panelFontSize
                             }
@@ -343,7 +344,7 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        visible: root.controlCenterModel.showBluetoothWidget
+                        visible: root.panelSettingsModel.widgetEnabled("bluetooth")
                         Layout.preferredWidth: bluetoothRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
                         Layout.preferredHeight: Theme.compactWidgetSize
                         active: root.bluetoothModel.visible
@@ -357,7 +358,7 @@ PanelWindow {
                             IconText {
                                 text: "󰂯"
                                 color: Theme.textStrong
-                                font.pixelSize: Math.round((Theme.panelFontSize + 1) * 0.9)
+                                font.pixelSize: Theme.scaledFontSize(14 * 0.9, 8)
                             }
                         }
 
@@ -374,7 +375,7 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        visible: root.controlCenterModel.showNetworkWidget
+                        visible: root.panelSettingsModel.widgetEnabled("network")
                         Layout.preferredWidth: networkRow.implicitWidth + Theme.networkWidgetHorizontalPadding * 2
                         Layout.preferredHeight: Theme.compactWidgetSize
                         active: root.networkModel.visible
@@ -389,7 +390,7 @@ PanelWindow {
                                 text: root.networkModel.statusText.indexOf("offline") >= 0
                                     || root.networkModel.statusText.indexOf("unavailable") >= 0 ? "󰤭" : "󰤨"
                                 color: Theme.textStrong
-                                font.pixelSize: Math.round((Theme.panelFontSize + 1) * 1.2)
+                                font.pixelSize: Theme.scaledFontSize(14 * 1.2, 8)
                             }
                         }
 
@@ -406,7 +407,7 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        visible: root.controlCenterModel.showVolumeWidget
+                        visible: root.panelSettingsModel.widgetEnabled("volume")
                         Layout.preferredWidth: volumeRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
                         Layout.preferredHeight: Theme.compactWidgetSize
                         active: root.controlsModel.visible
@@ -420,7 +421,7 @@ PanelWindow {
                             IconText {
                                 text: root.controlsModel.volumeMuted ? "󰝟" : "󰕾"
                                 color: Theme.textStrong
-                                font.pixelSize: Math.round((Theme.panelFontSize + 1) * 1.5)
+                                font.pixelSize: Theme.scaledFontSize(14 * 1.5, 8)
                             }
 
                             UiText {
@@ -452,7 +453,7 @@ PanelWindow {
                     }
 
                     PanelPill {
-                        visible: root.controlCenterModel.showPowerWidget
+                        visible: root.panelSettingsModel.widgetEnabled("power")
                         Layout.preferredWidth: Theme.pillHeight
                         Layout.preferredHeight: Theme.pillHeight
                         active: root.powerMenuModel.visible
@@ -462,7 +463,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: "󰐥"
                             color: Theme.textStrong
-                            font.pixelSize: Math.round((Theme.panelFontSize + 1) * 1.08)
+                            font.pixelSize: Theme.scaledFontSize(14 * 1.08, 8)
                         }
 
                         MouseArea {
@@ -490,37 +491,10 @@ PanelWindow {
     }
 
     PanelTooltip {
-        visible: root.state.batteryAvailable && batteryMouse.containsMouse
+        visible: root.powerModel.batteryAvailable && batteryMouse.containsMouse
         anchorWindow: root
         anchorItem: batteryPill
-        label: root.state.batteryPercent.toString() + "% - " + root.state.batteryStatus
-        anchorY: Theme.panelHeight
-        rightAligned: true
-    }
-
-    PanelTooltip {
-        visible: layoutMouse.containsMouse
-        anchorWindow: root
-        anchorItem: layoutMouse
-        label: "Layout: " + root.layoutModel.currentLayoutName + " (Klicken zum Wechseln)"
-        anchorY: Theme.panelHeight
-        rightAligned: true
-    }
-
-    PanelTooltip {
-        visible: updateMouse.containsMouse
-        anchorWindow: root
-        anchorItem: updateMouse
-        label: root.updateModel.updateCount + " Updates verfügbar"
-        anchorY: Theme.panelHeight
-        rightAligned: true
-    }
-
-    PanelTooltip {
-        visible: weatherMouse.containsMouse
-        anchorWindow: root
-        anchorItem: weatherMouse
-        label: root.weatherModel.temperature + "°C - " + root.weatherModel.description
+        label: root.powerModel.batteryPercent.toString() + "% - " + root.powerModel.batteryStatus
         anchorY: Theme.panelHeight
         rightAligned: true
     }
