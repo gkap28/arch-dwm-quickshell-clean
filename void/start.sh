@@ -26,6 +26,9 @@ for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dw
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
+for path in "$data/modules.sh" "$data/quickshell/StatusModules.qml"; do
+    [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
+done
 build=$(mktemp -d "$data/build.XXXXXXXX")
 trap 'rm -rf -- "$build"' EXIT HUP INT TERM
 for file in dwm.c drw.c drw.h util.c util.h tomlparser.c tomlparser.h config.def.h config.mk; do
@@ -158,6 +161,8 @@ install -m 755 "$repo/void/session.sh" "$data/session.sh"
 mkdir -p "$data/quickshell"
 install -m 644 "$repo/void/shell.qml" "$data/quickshell/shell.qml"
 install -m 644 "$repo/void/launcher.qml" "$data/quickshell/launcher.qml"
+install -m 644 "$repo/void/StatusModules.qml" "$data/quickshell/StatusModules.qml"
+install -m 755 "$repo/void/modules.sh" "$data/modules.sh"
 install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0

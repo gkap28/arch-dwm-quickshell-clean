@@ -90,15 +90,24 @@ ShellRoot {
             }
             Text {
                 anchors.centerIn: parent
-                width: Math.max(0, parent.width - 2 * workspaces.width - 16)
+                width: Math.max(0, parent.width - 2 * Math.max(workspaces.width, rightModules.width) - 16)
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: root.status
                 color: root.foreground
                 font.family: "monospace"; font.pixelSize: 14
             }
-            Item {
+            Row {
+                id: rightModules
                 anchors.right: parent.right
+                height: 28
+                spacing: 4
+                StatusModules {
+                    panel: panel; home: root.home
+                    background: root.normal; foreground: root.foreground
+                    surface: root.active; accent: root.workspaceBorder
+                }
+                Item {
                 width: 28; height: 28
                 Canvas {
                     anchors.fill: parent
@@ -109,6 +118,7 @@ ShellRoot {
                     }
                 }
                 MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu"]) }
+                }
             }
         }
     }
