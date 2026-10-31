@@ -26,7 +26,7 @@ for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dw
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
-for path in "$data/modules.sh" "$data/quickshell/StatusModules.qml"; do
+for path in "$data/modules.sh" "$data/module-details.sh" "$data/quickshell/StatusModules.qml"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 build=$(mktemp -d "$data/build.XXXXXXXX")
@@ -149,6 +149,10 @@ if command -v dbus-run-session >/dev/null 2>&1 && [ -z "${DBUS_SESSION_BUS_ADDRE
 fi
 exec sh "$HOME/.local/share/dwm-void/session.sh"
 SESSION
+# The bar needs every QML asset; refuse a partial install instead of a black gap.
+for file in shell.qml launcher.qml StatusModules.qml logo.svg; do
+    [ -f "$repo/void/$file" ] || { echo "Fehlt im Quellordner: void/$file" >&2; exit 1; }
+done
 install -m 755 "$build/xinitrc" "$data/xinitrc"
 install -m 755 "$repo/void/status.sh" "$data/status.sh"
 install -m 755 "$repo/void/monitors.sh" "$data/monitors.sh"
@@ -163,7 +167,11 @@ install -m 644 "$repo/void/shell.qml" "$data/quickshell/shell.qml"
 install -m 644 "$repo/void/launcher.qml" "$data/quickshell/launcher.qml"
 install -m 644 "$repo/void/StatusModules.qml" "$data/quickshell/StatusModules.qml"
 install -m 755 "$repo/void/modules.sh" "$data/modules.sh"
+install -m 755 "$repo/void/module-details.sh" "$data/module-details.sh"
 install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
+for file in "$data/quickshell/shell.qml" "$data/quickshell/launcher.qml" "$data/quickshell/StatusModules.qml" "$data/quickshell/logo.svg"; do
+    [ -f "$file" ] || { echo "Install fehlgeschlagen: $file" >&2; exit 1; }
+done
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0
 [ -z "${DISPLAY:-}" ] || { echo 'Bereits eine grafische Sitzung offen. Bitte aus der Konsole starten.' >&2; exit 1; }
