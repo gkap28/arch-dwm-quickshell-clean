@@ -22,7 +22,7 @@ if [ "$mode" = --start ] && [ -n "${DISPLAY:-}" ]; then
     exit 1
 fi
 # Reject symlinks on all managed paths before writing anything.
-for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh"; do
+for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh" "$data/power-menu" "$data/power-action.sh"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
@@ -56,12 +56,14 @@ mv "$build/dwm.new" "$build/dwm.c"
 awk -f "$repo/void/bar.awk" "$build/dwm.c" > "$build/dwm.new"
 mv "$build/dwm.new" "$build/dwm.c"
 sed 's/MesloLGS Nerd Font Mono/monospace/g' "$build/config.def.h" > "$build/config.h"
+cp "$repo/void/power-menu.c" "$build/power-menu.c"
 # No upstream Makefile install target is involved.
 cat > "$build/Makefile" <<'MAKE'
 include config.mk
 SRC = dwm.c drw.c util.c tomlparser.c
 all:
 	$(CC) $(CPPFLAGS) -DDWM_VOID_MINIMAL $(CFLAGS) -o dwm $(SRC) $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o power-menu power-menu.c $(LDFLAGS) $(LDLIBS)
 MAKE
 make -C "$build"
 for file in hotkeys.toml themes.toml window-rules.toml; do
@@ -143,6 +145,8 @@ install -m 755 "$build/xinitrc" "$data/xinitrc"
 install -m 755 "$repo/void/status.sh" "$data/status.sh"
 install -m 755 "$repo/void/monitors.sh" "$data/monitors.sh"
 install -m 755 "$repo/void/wallpaper.sh" "$data/wallpaper.sh"
+install -m 755 "$build/power-menu" "$data/power-menu"
+install -m 755 "$repo/void/power-action.sh" "$data/power-action.sh"
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0
 [ -z "${DISPLAY:-}" ] || { echo 'Bereits eine grafische Sitzung offen. Bitte aus der Konsole starten.' >&2; exit 1; }

@@ -19,7 +19,7 @@ class SafetyTests(unittest.TestCase):
         for name in ['startx','alacritty','xsetroot']:
             f=self.bin/name;f.write_text('#!/bin/sh\nexit 0\n');f.chmod(0o755)
         f=self.bin/'pkg-config';f.write_text('#!/bin/sh\nexit 0\n');f.chmod(0o755)
-        f=self.bin/'make';f.write_text('#!/bin/sh\nwhile [ $# -gt 0 ]; do [ "$1" = -C ] && dir=$2; shift; done; : > "$dir/dwm"\n');f.chmod(0o755)
+        f=self.bin/'make';f.write_text('#!/bin/sh\nwhile [ $# -gt 0 ]; do [ "$1" = -C ] && dir=$2; shift; done; : > "$dir/dwm"; : > "$dir/power-menu"\n');f.chmod(0o755)
         self.osfile=self.base/'os-release';self.osfile.write_text('ID=void\n')
         self.env={**os.environ,'HOME':str(self.home),'VOID_TEST_OS':str(self.osfile),'PATH':str(self.bin)+':'+os.environ['PATH']}
     def tearDown(self):self.tmp.cleanup()
@@ -46,7 +46,7 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual((self.home/'.xinitrc').read_text(),'keep')
         self.assertEqual((self.home/'.config/quickshell/shell.qml').read_text(),'keep')
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.repo.iterdir() if p.is_file()})
-        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','status.sh','wallpaper.sh','xinitrc'])
+        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','power-action.sh','power-menu','status.sh','wallpaper.sh','xinitrc'])
         self.assertIn('status.sh" &',(data/'xinitrc').read_text())
         session=(data/'xinitrc').read_text()
         self.assertLess(session.index('/monitors.sh'),session.index('/dwm"'))

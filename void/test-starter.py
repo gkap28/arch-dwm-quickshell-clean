@@ -1,4 +1,4 @@
-"""Safety tests and actual X11 hotkey test. Use build/X11 dependencies.
+"""Safety tests and actual X11 hotkey test. Requires build/X11 dependencies.
 The installer OS gate is changed ONLY in an isolated test copy; host files untouched.
 """
 import os, pathlib, shutil, subprocess, tempfile, time, unittest
@@ -43,7 +43,7 @@ class StarterTests(unittest.TestCase):
         self.assertEqual((self.home/'.xinitrc').read_text(),'keep')
         self.assertEqual((self.home/'.config/quickshell/shell.qml').read_text(),'keep')
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.repo.iterdir() if p.is_file()})
-        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','status.sh','wallpaper.sh','xinitrc'])
+        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','power-action.sh','power-menu','status.sh','wallpaper.sh','xinitrc'])
     def test_symlink_destination_refused(self):
         (self.home/'.local/share').mkdir(parents=True)
         outside=self.base/'outside';outside.mkdir()
@@ -52,7 +52,6 @@ class StarterTests(unittest.TestCase):
         self.assertEqual(list(outside.iterdir()),[])
     def test_independent_nine_workspaces_and_status_on_two_monitors(self):
         result=self.install();self.assertEqual(result.returncode,0,result.stderr)
-        # Substitute only Xinerama geometry: no physical outputs in Xvfb.
         shim=self.base/'screens.c'
         shim.write_text('''#include <stdlib.h>
 #include <X11/Xlib.h>
@@ -89,6 +88,27 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 time.sleep(.3)
             left=command('xdotool','search','--class','LeftTest').split()[0]
             right=command('xdotool','search','--class','RightTest').split()[0]
+            for origin,win,other,otherx in [(0,left,right,2560),(2560,right,left,0)]:
+                command('xdotool','mousemove',str(origin+38),'8');command('xdotool','click','1');time.sleep(.2)
+                self.assertLess(int(geometry(win)['X']),0)
+                self.assertEqual(int(geometry(other)['X']),otherx)
+                command('xdotool','mousemove',str(origin+12),'8');command('xdotool','click','1');time.sleep(.2)
+                self.assertEqual(int(geometry(win)['X']),origin)
+            helper=self.home/'.local/share/dwm-void/power-action.sh'
+            helper.write_text('#!/bin/sh\nprintf "%s" "$1" > "$HOME/power-invocation"\n')
+            command('xdotool','mousemove','4470','8');command('xdotool','click','1');time.sleep(.3)
+            menu=command('xdotool','search','--name','^Void Power$').split()[0]
+            command('xdotool','mousemove','--window',menu,'30','67');command('xdotool','click','1');time.sleep(.2)
+            self.assertFalse((self.home/'power-invocation').exists())
+            capture=os.environ.get('VOID_TEST_POWER_CAPTURE')
+            if capture:command('import','-window',menu,capture)
+            command('xdotool','key','Escape');time.sleep(.2)
+            self.assertFalse((self.home/'power-invocation').exists())
+            command('xdotool','mousemove','4470','8');command('xdotool','click','1');time.sleep(.3)
+            menu=command('xdotool','search','--name','^Void Power$').split()[0]
+            command('xdotool','mousemove','--window',menu,'30','67');command('xdotool','click','1');time.sleep(.2)
+            command('xdotool','mousemove','--window',menu,'30','151');command('xdotool','click','1');time.sleep(.3)
+            self.assertEqual((self.home/'power-invocation').read_text(),'reboot')
             for tag in range(2,10):
                 command('xdotool','mousemove','3000','300');command('xdotool','key',f'super+{tag}');time.sleep(.1)
                 self.assertEqual(int(geometry(left)['X']),0)
@@ -108,7 +128,7 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 self.assertNotEqual(path.read_bytes(),(self.base/f'before{i}.png').read_bytes())
                 capture=os.environ.get('VOID_TEST_DUAL_CAPTURE')
                 if capture:shutil.copy(path,f'{capture}-{geometry(b)["WIDTH"]}.png')
-            print('Verified: 1-9 switch independently on both simulated monitors; both bars update without focus change. Physical Void displays remain user-tested.')
+            print('Verified: workspace mouse clicks on both monitors; menu opens, Escape cancels, confirmation invokes stub only; 1-9 independent; both statuses update. Physical Void hardware remains unverified.')
         finally:
             for terminal in terminals:
                 if terminal.poll() is None:terminal.terminate();terminal.wait(timeout=5)
