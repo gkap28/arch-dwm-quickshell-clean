@@ -43,6 +43,16 @@ sed 's|".config/dwm-titus"|".local/share/dwm-void/config"|g; s|".local/share/dwm
 #ifdef DWM_VOID_MINIMAL\
 \treturn;\
 #endif' "$build/dwm.new" > "$build/dwm.c"
+# Upstream delegates its bar to Quickshell. Restore the native bar ONLY here.
+for marker in 'The Quickshell panel handles drawing; the dwm bar is unused.' 'The external panel creates its own windows; skip dwm bar creation.' 'bh = 0; /\* Quickshell provides the panel. \*/' '^scanaltbars(void)$'; do
+    [ "$(grep -c "$marker" "$build/dwm.c")" = 1 ] || { echo 'Quellstand geaendert: Leistenanpassung pruefen.' >&2; exit 1; }
+done
+sed '/The Quickshell panel handles drawing; the dwm bar is unused\./{N;d;}; /The external panel creates its own windows; skip dwm bar creation\./{N;d;}; s/bh = 0; \/\* Quickshell provides the panel\. \*\//bh = drw->fonts->h + 2; \/\* Native Void bar height. \*\//; /^scanaltbars(void)$/,+1!b; /^{$/a\
+#ifdef DWM_VOID_MINIMAL\
+\treturn;\
+#endif
+' "$build/dwm.c" > "$build/dwm.new"
+mv "$build/dwm.new" "$build/dwm.c"
 sed 's/MesloLGS Nerd Font Mono/monospace/g' "$build/config.def.h" > "$build/config.h"
 # No upstream Makefile install target is involved.
 cat > "$build/Makefile" <<'MAKE'
