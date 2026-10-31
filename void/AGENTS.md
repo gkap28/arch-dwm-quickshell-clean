@@ -8,3 +8,4 @@
 - Apply native bar visibility, workspace rendering, click geometry and per-monitor status updates through bar.awk in the private build only, because upstream panel behavior must stay unchanged.
 - Set existing wallpaper with an optional helper and feh --no-fehbg, because other desktop configuration and pictures must stay untouched.
 - Keep the power popup user-local with explicit confirmation and elevate only a fixed system shutdown binary in Alacritty as fallback, because user-writable helpers must never run as root.
+- Share release-aware pointer grabbing between native power and initial control popups; launch existing user tools from the control popup, because the full Quickshell port remains incremental.
