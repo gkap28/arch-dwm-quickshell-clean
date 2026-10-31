@@ -5,7 +5,7 @@ class HotkeyTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(); self.home=pathlib.Path(self.tmp.name)
         self.file=self.home/'.local/share/dwm-void/config/hotkeys.toml'; self.file.parent.mkdir(parents=True)
-        self.original=(ROOT/'hotkeys.toml').read_text(); self.file.write_text(self.original)
+        self.original=(ROOT/'start.sh').read_text().split("<<'HOTKEYS'\n",1)[1].split('\nHOTKEYS',1)[0]+'\n'; self.file.write_text(self.original)
         self.script=self.home/'update.sh'
         self.script.write_text((ROOT/'update-hotkeys.sh').read_text().replace('[ "$(id -u)" -ne 0 ]','[ 1000 -ne 0 ]'))
         self.env={**os.environ,'HOME':str(self.home)}
