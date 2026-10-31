@@ -25,7 +25,17 @@ startx "$HOME/.local/share/dwm-void/xinitrc" -- -nolisten tcp
 
 Oben eine schmale Leiste: links die Arbeitsflaechen, rechts WLAN, Akku (falls vorhanden) und Uhrzeit, alle 30 Sekunden frisch. Noch ohne Kontrollzentrum, Hintergrundbild und automatischen Programmstart. Super+X oder Super+Return: Alacritty. Brave startest du dort mit dem bei dir installierten Brave-Befehl. Super+J/K: Fenster wechseln; Super+1 bis 9: Arbeitsflaechen wechseln; Super+Shift+C: Fenster schliessen; Super+Shift+Q: zur Konsole zurueck.
 
-## Sicherheit
+## Zusaetzliche Programmtasten
+
+Nach `git pull` im Projektordner: `sh void/update-hotkeys.sh`.
+Super+Q schliesst das aktive Fenster, Super+Shift+Return startet Thunar,
+Super+B startet Brave (brave, brave-browser oder brave-browser-stable),
+Super+Return startet Alacritty. Super+X und Super+Shift+Q bleiben erhalten.
+Thunar und Brave muessen bereits installiert sein. Die erste vorherige
+Tastendatei wird als hotkeys.toml.before-app-keys im gleichen isolierten Ordner gesichert.
+Die Tasten werden beim Speichern automatisch neu geladen; kein Desktop-Neustart noetig.
+
+## Sicherheit der Installation
 
 Nur ~/.local/share/dwm-void wird beschrieben: dwm, xinitrc, status.sh (Leisten-Helfer) und config mit hotkeys.toml, themes.toml und window-rules.toml. Vorhandene TOML-Dateien bleiben erhalten; der temporaere Bauordner wird entfernt. ~/.config, ~/.xinitrc, /usr, Dienste und Pakete werden nicht angefasst. Xorg/startx kann seine eigenen normalen Sitzungsdateien anlegen. In einer privaten Baukopie werden die Original-Start-/Stop-Routinen und der automatische Themen-Helfer abgeschaltet und die TOML-Pfade umgeleitet. Der originale Quelltext bleibt unveraendert.
 
