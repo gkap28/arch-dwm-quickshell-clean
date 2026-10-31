@@ -1,4 +1,9 @@
 # Private build only: monitor-targeted workspace messages and native fallback.
+# Only native (override_redirect) dwm bars are ever destroyed; Quickshell's own
+# windows are never destroyed, and a native bar adopts an unowned Quickshell
+# panel on its monitor again (e.g. after a DisplayPort monitor wakes up).
+/^isaltbar\(Window win, XWindowAttributes \*wa\)$/ { section = "isalt" }
+section == "isalt" && /Atom wtype;/ { print; print "\tif (wa && wa->width <= wa->height) return 0; /* Qt helper windows are no bars. */"; next }
 /^drawbar\(Monitor \*m\)$/ { section = "bar" }
 /^clientmessage\(XEvent \*e\)$/ { section = "message" }
 /^managealtbar\(Window win, XWindowAttributes \*wa\)$/ { section = "manage" }
@@ -18,6 +23,25 @@ section == "bar" && /int x, w, tw = 0;/ {
     print "\t\tif (hint.res_class) XFree(hint.res_class);"
     print "\t\tif (external) return;"
     print "\t}"
+    print "\t{"
+    print "\t\tWindow d1, d2, *wins = NULL, found = 0; unsigned int n = 0;"
+    print "\t\tif (XQueryTree(dpy, root, &d1, &d2, &wins, &n)) {"
+    print "\t\t\tfor (unsigned int i = 0; i < n && !found; i++) {"
+    print "\t\t\t\tXWindowAttributes qa; Monitor *o;"
+    print "\t\t\t\tif (wins[i] == m->barwin || !XGetWindowAttributes(dpy, wins[i], &qa) || qa.override_redirect || qa.map_state != IsViewable || qa.width <= qa.height) continue;"
+    print "\t\t\t\tif (!wmclasscontains(wins[i], altbarclass, \"\") || recttomon(qa.x, qa.y, qa.width, qa.height) != m || INTERSECT(qa.x, qa.y, qa.width, qa.height, m) <= 0) continue;"
+    print "\t\t\t\tfor (o = mons; o && o->barwin != wins[i]; o = o->next);"
+    print "\t\t\t\tif (!o) found = wins[i];"
+    print "\t\t\t}"
+    print "\t\t\tif (wins) XFree(wins);"
+    print "\t\t}"
+    print "\t\tXWindowAttributes qa;"
+    print "\t\tif (found && XGetWindowAttributes(dpy, found, &qa)) {"
+    print "\t\t\tupdatealtbar(m, found, &qa);"
+    print "\t\t\tXSelectInput(dpy, found, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask|ExposureMask);"
+    print "\t\t\tXRaiseWindow(dpy, found); updateclientlist(); arrange(m); return;"
+    print "\t\t}"
+    print "\t}"
 }
 section == "message" && /if \(cme->message_type == netatom\[NetCurrentDesktop\]\)/ {
     print "\tif (cme->message_type == XInternAtom(dpy, \"_DWM_VOID_VIEW\", False) && cme->format == 32) {"
@@ -32,10 +56,10 @@ section == "message" && /if \(cme->message_type == netatom\[NetCurrentDesktop\]\
     print "\t}"
 }
 section == "manage" && /changed = updatealtbar/ {
-    print "\tif (m->barwin && m->barwin != win) { Window old = m->barwin; m->barwin = win; XDestroyWindow(dpy, old); }"
+    print "\tif (m->barwin && m->barwin != win) { Window old = m->barwin; XWindowAttributes oa; m->barwin = win; if (XGetWindowAttributes(dpy, old, &oa) && oa.override_redirect) XDestroyWindow(dpy, old); }"
 }
 section == "replace" && /changed = m->barwin != win/ {
-    print "\tif (m->barwin && m->barwin != win) { Window old = m->barwin; m->barwin = win; XDestroyWindow(dpy, old); }"
+    print "\tif (m->barwin && m->barwin != win) { Window old = m->barwin; XWindowAttributes oa; m->barwin = win; if (XGetWindowAttributes(dpy, old, &oa) && oa.override_redirect) XDestroyWindow(dpy, old); }"
 }
 section == "unmanage" && /m->barwin = 0;/ { print; print "\tm->bh = bh;"; next }
 section == "unmanage" && /m->bh = 0;/ { next }

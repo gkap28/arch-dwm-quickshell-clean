@@ -10,8 +10,13 @@ if command -v picom >/dev/null 2>&1 && [ ! -L "$data/picom.log" ]; then
     compositor=$!
 fi
 if command -v quickshell >/dev/null 2>&1; then
-    quickshell --path "$data/quickshell/shell.qml" > "$data/quickshell.log" 2>&1 &
-    panel=$!
+    if [ -r "$data/quickshell/shell.qml" ] && [ -r "$data/quickshell/StatusModules.qml" ]; then
+        quickshell --path "$data/quickshell/shell.qml" > "$data/quickshell.log" 2>&1 &
+        panel=$!
+    else
+        # Keep the native Nord bar instead of a half-loaded panel; say why.
+        echo 'Leiste: Quickshell-Dateien unvollstaendig. Bitte: git pull && sh void/start.sh --install' > "$data/quickshell.log" 2>&1
+    fi
 fi
 cleanup() {
     [ -z "$panel" ] || kill "$panel" 2>/dev/null || :
