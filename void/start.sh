@@ -22,7 +22,7 @@ if [ "$mode" = --start ] && [ -n "${DISPLAY:-}" ]; then
     exit 1
 fi
 # Reject symlinks on all managed paths before writing anything.
-for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh" "$data/power-menu" "$data/power-action.sh" "$data/control-action.sh" "$data/bar-bridge" "$data/session.sh" "$data/quickshell" "$data/quickshell/shell.qml" "$data/quickshell/logo.svg" "$data/quickshell.log"; do
+for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh" "$data/power-menu" "$data/power-action.sh" "$data/control-action.sh" "$data/bar-bridge" "$data/session.sh" "$data/quickshell" "$data/quickshell/shell.qml" "$data/quickshell/launcher.qml" "$data/quickshell/logo.svg" "$data/quickshell.log"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
@@ -43,7 +43,7 @@ sed 's|".config/dwm-titus"|".local/share/dwm-void/config"|g; s|".local/share/dwm
 #ifdef DWM_VOID_MINIMAL\
 \treturn;\
 #endif' "$build/dwm.new" > "$build/dwm.c"
-# Upstream delegates its bar to Quickshell. Restore the native fallback ONLY here.
+# Upstream delegates its bar to Quickshell. Restore the native bar ONLY here.
 for marker in 'The Quickshell panel handles drawing; the dwm bar is unused.' 'The external panel creates its own windows; skip dwm bar creation.' 'bh = 0; /\* Quickshell provides the panel. \*/' '^scanaltbars(void)$'; do
     [ "$(grep -c "$marker" "$build/dwm.c")" = 1 ] || { echo 'Quellstand geaendert: Leistenanpassung pruefen.' >&2; exit 1; }
 done
@@ -135,9 +135,12 @@ set -eu
 export XDG_SESSION_TYPE=x11
 export XDG_CURRENT_DESKTOP=dwm
 export DESKTOP_SESSION=dwm-void
+# Restore the confirmed monitor layout before dwm reads screen geometry.
 sh "$HOME/.local/share/dwm-void/monitors.sh"
 sh "$HOME/.local/share/dwm-void/wallpaper.sh"
+# Statuszeile fuer die Leiste (Uhrzeit, WLAN, Akku) im Hintergrund.
 "$HOME/.local/share/dwm-void/status.sh" &
+# Optional session bus; no systemd services or upstream autostart.
 if command -v dbus-run-session >/dev/null 2>&1 && [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
     exec dbus-run-session -- sh "$HOME/.local/share/dwm-void/session.sh"
 fi
@@ -154,6 +157,7 @@ install -m 755 "$build/bar-bridge" "$data/bar-bridge"
 install -m 755 "$repo/void/session.sh" "$data/session.sh"
 mkdir -p "$data/quickshell"
 install -m 644 "$repo/void/shell.qml" "$data/quickshell/shell.qml"
+install -m 644 "$repo/void/launcher.qml" "$data/quickshell/launcher.qml"
 install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0

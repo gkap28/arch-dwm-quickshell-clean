@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+
 ShellRoot {
     id: root
     property var monitors: []
@@ -9,6 +10,14 @@ ShellRoot {
     readonly property string active: "#434C5E"
     readonly property string foreground: "#D8DEE9"
     readonly property string accent: "#88C0D0"
+    // Same default-scale workspace geometry and state roles as Titus WorkspaceButton.
+    readonly property int workspaceSize: 22
+    readonly property int workspaceRadius: 6
+    readonly property int workspaceBorderWidth: 1
+    readonly property string workspaceHover: "#4C566A"
+    readonly property string workspaceBorder: "#81A1C1"
+    readonly property string workspaceSelectedText: "#FFFFFF"
+    readonly property string transparent: "#00000000"
     readonly property string home: Quickshell.env("HOME") + "/.local/share/dwm-void/"
     Process {
         command: [root.home + "bar-bridge", "watch"]
@@ -42,16 +51,39 @@ ShellRoot {
                     Image { anchors.centerIn: parent; width: 22; height: 22; source: "logo.svg" }
                     MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu", "--control"]) }
                 }
-                Repeater {
-                    model: 9
-                    Rectangle {
-                        required property int index
-                        width: 28; height: 28
-                        color: panel.monitor && panel.monitor.desktop === index ? root.active : root.normal
-                        Text { anchors.centerIn: parent; text: index + 1; color: root.foreground; font.family: "monospace"; font.pixelSize: 14 }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: Quickshell.execDetached([root.home + "bar-bridge", "view", index.toString(), panel.screen.x.toString(), panel.screen.y.toString()])
+                Item {
+                    width: workspaceRow.width + 8
+                    height: parent.height
+                    Row {
+                        id: workspaceRow
+                        anchors.centerIn: parent
+                        spacing: 1
+                        Repeater {
+                            model: 9
+                            Rectangle {
+                                id: workspaceButton
+                                required property int index
+                                readonly property bool selected: !!panel.monitor && panel.monitor.desktop === index
+                                width: root.workspaceSize; height: root.workspaceSize
+                                radius: root.workspaceRadius
+                                color: selected ? root.active : workspaceMouse.containsMouse ? root.workspaceHover : root.transparent
+                                border.color: selected || workspaceMouse.containsMouse ? root.workspaceBorder : root.transparent
+                                border.width: selected || workspaceMouse.containsMouse ? root.workspaceBorderWidth : 0
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: workspaceButton.index + 1
+                                    color: workspaceButton.selected ? root.workspaceSelectedText : root.foreground
+                                    font.family: "monospace"; font.pixelSize: 14
+                                    font.bold: workspaceButton.selected
+                                }
+                                MouseArea {
+                                    id: workspaceMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: Quickshell.execDetached([root.home + "bar-bridge", "view", workspaceButton.index.toString(), panel.screen.x.toString(), panel.screen.y.toString()])
+                                }
+                            }
                         }
                     }
                 }

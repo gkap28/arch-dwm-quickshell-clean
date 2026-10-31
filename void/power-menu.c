@@ -17,16 +17,16 @@ enum { WIDTH = 300, ROW = 42, HEADER = 46, HEIGHT = HEADER + 5 * ROW + 12 };
 
 int main(int argc, char **argv) {
     int control = argc > 1 && strcmp(argv[1], "--control") == 0;
-    const char *control_labels[] = {"Terminal", "Dateien", "Tastenbelegung", "Bildschirme", "Lautstaerke", "Netzwerk", "Hintergrund", "Power"};
-    const char *control_actions[] = {"terminal", "files", "hotkeys", "displays", "volume", "network", "wallpaper", "power"};
-    int height = control ? HEADER + 8 * ROW + 12 : HEIGHT;
+    const char *control_labels[] = {"Terminal", "Dateien", "Tastenbelegung", "Bildschirme", "Lautstaerke", "Netzwerk", "Hintergrund", "Power", "Programme"};
+    const char *control_actions[] = {"terminal", "files", "hotkeys", "displays", "volume", "network", "wallpaper", "power", "apps"};
+    int height = control ? HEADER + 9 * ROW + 12 : HEIGHT;
     Display *d = XOpenDisplay(NULL);
     if (!d) return 1;
     int screen = DefaultScreen(d), px = 0, py = 0, wx, wy;
     unsigned int mask;
     Window root = RootWindow(d, screen), child, ignored;
     XQueryPointer(d, root, &ignored, &child, &px, &py, &wx, &wy, &mask);
-    int edge = DisplayWidth(d, screen), left = 0;
+    int edge = DisplayWidth(d, screen), left = 0, top = 0;
     if (XineramaIsActive(d)) {
         int count = 0;
         XineramaScreenInfo *screens = XineramaQueryScreens(d, &count);
@@ -35,6 +35,7 @@ int main(int argc, char **argv) {
                 if (px >= screens[i].x_org && px < screens[i].x_org + screens[i].width) {
                     edge = screens[i].x_org + screens[i].width;
                     left = screens[i].x_org;
+                    top = screens[i].y_org;
                 }
             XFree(screens);
         }
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
         XClearWindow(d, win);
         const char *title = control ? "Kontrollzentrum" : (confirmation < 0 ? "Power" : "Bestaetigen?");
         XftDrawStringUtf8(draw, &accent, font, 16, 29, (const FcChar8 *)title, strlen(title));
-        int rows = control ? 8 : (confirmation < 0 ? 5 : 3);
+        int rows = control ? 9 : (confirmation < 0 ? 5 : 3);
         for (int i = 0; i < rows; ++i) {
             const char *label = control ? control_labels[i] : (confirmation < 0 ? labels[i] :
                 (i == 0 ? labels[confirmation] : (i == 1 ? "Abbrechen" : "Bestaetigen")));
@@ -114,7 +115,10 @@ int main(int argc, char **argv) {
         const char *home = getenv("HOME");
         char path[4096];
         if (!home || snprintf(path, sizeof(path), "%s/.local/share/dwm-void/%s", home, control ? "control-action.sh" : "power-action.sh") >= (int)sizeof(path)) return 1;
-        execlp("sh", "sh", path, control ? control_actions[execute] : actions[execute], (char *)NULL);
+        char monitor_x[32], monitor_y[32];
+        snprintf(monitor_x, sizeof(monitor_x), "%d", left);
+        snprintf(monitor_y, sizeof(monitor_y), "%d", top);
+        execlp("sh", "sh", path, control ? control_actions[execute] : actions[execute], monitor_x, monitor_y, (char *)NULL);
         perror("Power action"); return 1;
     }
     return 0;
