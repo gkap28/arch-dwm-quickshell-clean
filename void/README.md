@@ -42,3 +42,7 @@ Nur ~/.local/share/dwm-void wird beschrieben: dwm, xinitrc, status.sh, monitors.
 ## Pruefstand
 
 Sicherheits-, Hintergrund- und Startertests erfolgreich. Zwei Xinerama-Monitore mit Georgs Groessen wurden unter Xvfb nachgebildet: Arbeitsflaechen 1-9 wechseln unabhaengig; ein Fenster auf dem anderen Monitor bleibt sichtbar. Beide Leisten aktualisieren ohne Fokuswechsel; Bilder bestaetigen 1-9 und mittigen Status. Xterm ersetzte Alacritty im Fenstertest. Dies ersetzt keine Hardwarepruefung. Georg bestaetigte Desktop, Leiste und Monitoranordnung nach Neustart auf Void. Neue Leisten und Hintergrund sind dort noch zu bestaetigen. Quickshell, Ton und Kontrollzentrum sind noch nicht portiert.
+
+## Ton
+
+Void startet PipeWire nicht von selbst. Ist pipewire installiert und laeuft fuer dich noch nicht, startet die Sitzung pipewire, dazu wireplumber (wenn PipeWire es nicht schon selbst startet) und pipewire-pulse (falls installiert). Beim Abmelden endet nur dieser eigene Ton. Ein schon laufendes PipeWire bleibt unberuehrt. Meldungen: ~/.local/share/dwm-void/pipewire.log. Keine Systemdateien, keine Dienste, nichts in ~/.config. RTKit-Warnungen sind harmlos.
