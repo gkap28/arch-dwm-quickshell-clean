@@ -22,7 +22,7 @@ if [ "$mode" = --start ] && [ -n "${DISPLAY:-}" ]; then
     exit 1
 fi
 # Reject symlinks on all managed paths before writing anything.
-for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh"; do
+for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
@@ -126,6 +126,8 @@ set -eu
 export XDG_SESSION_TYPE=x11
 export XDG_CURRENT_DESKTOP=dwm
 export DESKTOP_SESSION=dwm-void
+# Restore the confirmed monitor layout before dwm reads screen geometry.
+sh "$HOME/.local/share/dwm-void/monitors.sh"
 # Statuszeile fuer die Leiste (Uhrzeit, WLAN, Akku) im Hintergrund.
 "$HOME/.local/share/dwm-void/status.sh" &
 # Optional session bus; no systemd services or upstream autostart.
@@ -136,6 +138,7 @@ exec "$HOME/.local/share/dwm-void/dwm"
 SESSION
 install -m 755 "$build/xinitrc" "$data/xinitrc"
 install -m 755 "$repo/void/status.sh" "$data/status.sh"
+install -m 755 "$repo/void/monitors.sh" "$data/monitors.sh"
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0
 [ -z "${DISPLAY:-}" ] || { echo 'Bereits eine grafische Sitzung offen. Bitte aus der Konsole starten.' >&2; exit 1; }

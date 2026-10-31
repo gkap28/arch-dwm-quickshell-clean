@@ -43,7 +43,7 @@ class StarterTests(unittest.TestCase):
         self.assertEqual((self.home/'.xinitrc').read_text(),'keep')
         self.assertEqual((self.home/'.config/quickshell/shell.qml').read_text(),'keep')
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.repo.iterdir() if p.is_file()})
-        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','status.sh','xinitrc'])
+        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','status.sh','xinitrc'])
     def test_symlink_destination_refused(self):
         (self.home/'.local/share').mkdir(parents=True)
         outside=self.base/'outside';outside.mkdir()
