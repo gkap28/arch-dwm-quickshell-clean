@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Pipewire
 
 Row {
     id: root
@@ -14,16 +15,35 @@ Row {
     required property string accent
     spacing: 4
     height: 28
-    property int volume: -1
-    property bool muted: false
+    readonly property var nativeSink: Pipewire.defaultAudioSink
+    readonly property var nativeSource: Pipewire.defaultAudioSource
+    readonly property bool nativeReady: nativeSink !== null && nativeSink.ready && nativeSink.audio !== null
+    readonly property bool nativeMicReady: nativeSource !== null && nativeSource.ready && nativeSource.audio !== null
+    property int fallbackVolume: -1
+    property bool fallbackMuted: false
+    readonly property int volume: nativeReady ? Math.round(nativeSink.audio.volume * 100) : fallbackVolume
+    readonly property bool muted: nativeReady ? nativeSink.audio.muted : fallbackMuted
+    PwObjectTracker { objects: [root.nativeSink, root.nativeSource] }
+    readonly property var nativeOutputs: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio !== null)
+    function nativeAction(name, value) {
+        if (!nativeReady) return false;
+        if (name === "mute") nativeSink.audio.muted = !nativeSink.audio.muted;
+        else if (name === "volume") nativeSink.audio.volume = Math.max(0, Math.min(100, value)) / 100;
+        else if (name === "up" || name === "down") nativeSink.audio.volume = Math.max(0, Math.min(1, nativeSink.audio.volume + (name === "up" ? 0.05 : -0.05)));
+        else return false;
+        return true;
+    }
     property string network: "offline"
     property string opened: ""
-    property var outputs: []
+    property var fallbackOutputs: []
+    readonly property var outputs: nativeReady ? nativeOutputs.map(n => ({name:n.name, description:n.description || n.name})) : fallbackOutputs
     property var activeConnections: []
     property var wifiNetworks: []
     property var savedProfiles: []
-    property string defaultOutput: ""
-    property string micState: "Nicht verfügbar"
+    property string fallbackDefaultOutput: ""
+    readonly property string defaultOutput: nativeReady ? nativeSink.name : fallbackDefaultOutput
+    property string fallbackMicState: "Nicht verfügbar"
+    readonly property string micState: nativeMicReady ? (nativeSource.audio.muted ? "Stumm" : "Aktiv") : fallbackMicState
     property string mediaPlayer: ""
     property string mediaText: "Keine Wiedergabe"
     property bool nmAvailable: false
@@ -41,6 +61,12 @@ Row {
         parts.push(part); return parts;
     }
     function detailsAction(name, args, password) {
+        if (name === "output" && nativeReady) {
+            const node = nativeOutputs.find(n => n.name === args[0]);
+            if (node) Pipewire.preferredDefaultAudioSink = node;
+            return;
+        }
+        if (name === "mic-mute" && nativeMicReady) { nativeSource.audio.muted = !nativeSource.audio.muted; return; }
         if (busy) return;
         busy = true; message = "";
         operation.command = ["sh", home + "module-details.sh", name].concat(args || []);
@@ -62,12 +88,12 @@ Row {
         stdout: StdioCollector {
             onStreamFinished: {
                 const outputs = [], active = [], wifi = [], saved = [];
-                root.defaultOutput = ""; root.micState = "Nicht verfügbar"; root.mediaPlayer = ""; root.mediaText = "Keine Wiedergabe"; root.nmAvailable = false;
+                root.fallbackDefaultOutput = ""; root.fallbackMicState = "Nicht verfügbar"; root.mediaPlayer = ""; root.mediaText = "Keine Wiedergabe"; root.nmAvailable = false;
                 for (const line of text.trim().split("\n")) {
                     const p = line.split("\t");
-                    if (p[0] === "default") root.defaultOutput = p[1] || "";
+                    if (p[0] === "default") root.fallbackDefaultOutput = p[1] || "";
                     else if (p[0] === "output") outputs.push({name:p[1], description:p.slice(2).join(" ")});
-                    else if (p[0] === "mic") root.micState = p[1].indexOf("yes") >= 0 ? "Stumm" : p[1].indexOf("no") >= 0 ? "Aktiv" : "Nicht verfügbar";
+                    else if (p[0] === "mic") root.fallbackMicState = p[1].indexOf("yes") >= 0 ? "Stumm" : p[1].indexOf("no") >= 0 ? "Aktiv" : "Nicht verfügbar";
                     else if (p[0] === "media") { root.mediaPlayer = p[1]; root.mediaText = p[2]; }
                     else if (p[0] === "nm") root.nmAvailable = p[1] === "available";
                     else {
@@ -77,7 +103,7 @@ Row {
                         else if (p[0] === "saved") saved.push({name:row[0], uuid:row[1], type:row[2]});
                     }
                 }
-                root.outputs = outputs; root.activeConnections = active; root.wifiNetworks = wifi; root.savedProfiles = saved;
+                root.fallbackOutputs = outputs; root.activeConnections = active; root.wifiNetworks = wifi; root.savedProfiles = saved;
             }
         }
     }
@@ -93,6 +119,7 @@ Row {
         background: Rectangle { radius: 6; color: control.hovered ? root.surface : root.background; border.width: 1; border.color: control.activeFocus ? root.accent : root.surface }
     }
     function action(name, value) {
+        if (nativeAction(name, value)) return;
         const args = ["sh", home + "modules.sh", name];
         if (value !== undefined) args.push(value.toString());
         Quickshell.execDetached(args);
@@ -108,7 +135,7 @@ Row {
             onRead: data => {
                 const parts = data.trim().split("\t");
                 if (parts.length !== 3) return;
-                root.volume = Number(parts[0]); root.muted = parts[1] === "1"; root.network = parts[2];
+                root.fallbackVolume = Number(parts[0]); root.fallbackMuted = parts[1] === "1"; root.network = parts[2];
             }
         }
     }
@@ -155,9 +182,25 @@ Row {
                 onClicked: root.opened = root.opened === pill.modelData ? "" : pill.modelData
                 onWheel: wheel => { if (pill.audio) { root.action(wheel.angleDelta.y > 0 ? "up" : "down"); wheel.accepted = true; } }
             }
-            ToolTip.visible: mouse.containsMouse && root.opened === ""
-            ToolTip.delay: 700
-            ToolTip.text: audio ? (root.volume < 0 ? "Ton nicht verfügbar" : root.muted ? "Stumm" : "Lautstärke") : root.network === "wifi" ? "WLAN verbunden" : root.network === "ethernet" ? "Kabel verbunden" : "Nicht verbunden"
+            PopupWindow {
+                id: hint
+                anchor.window: root.panel
+                anchor.rect.x: Math.max(0, root.panel.width - implicitWidth - (pill.audio ? 4 : 84))
+                anchor.rect.y: root.panel.height + 4
+                visible: mouse.containsMouse && root.opened === ""
+                implicitWidth: hintText.implicitWidth + 20
+                implicitHeight: 30
+                color: "transparent"
+                Rectangle {
+                    anchors.fill: parent; color: root.background; radius: 6; border.width: 1; border.color: root.accent
+                    Text {
+                        id: hintText
+                        anchors.centerIn: parent
+                        text: pill.audio ? (root.volume < 0 ? "Ton nicht verfügbar" : root.muted ? "Stumm" : "Lautstärke") : root.network === "wifi" ? "WLAN verbunden" : root.network === "ethernet" ? "Kabel verbunden" : "Nicht verbunden"
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 12
+                    }
+                }
+            }
         }
     }
     PopupWindow {
@@ -196,7 +239,7 @@ Row {
                         ColumnLayout {
                             Layout.fillWidth: true
                             Label { text: "Audio"; font.pixelSize: 22; font.bold: true }
-                            Label { text: root.volume < 0 ? "Ton nicht verfügbar (pactl)" : root.muted ? "Stumm" : root.volume + "%" }
+                            Label { text: root.volume < 0 ? "Kein laufender Ton-Ausgang" : root.muted ? "Stumm" : root.volume + "%" }
                         }
                         ActionButton { text: "Aktualisieren"; onClicked: {root.loadDetails(); refresh.restart();} }
                     }
