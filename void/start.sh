@@ -22,7 +22,7 @@ if [ "$mode" = --start ] && [ -n "${DISPLAY:-}" ]; then
     exit 1
 fi
 # Reject symlinks on all managed paths before writing anything.
-for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh" "$data/power-menu" "$data/power-action.sh" "$data/control-action.sh"; do
+for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dwm" "$data/dwm.new" "$data/xinitrc" "$data/status.sh" "$data/monitors.sh" "$data/wallpaper.sh" "$data/power-menu" "$data/power-action.sh" "$data/control-action.sh" "$data/bar-bridge" "$data/session.sh" "$data/quickshell" "$data/quickshell/shell.qml" "$data/quickshell/logo.svg" "$data/quickshell.log"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
@@ -43,7 +43,7 @@ sed 's|".config/dwm-titus"|".local/share/dwm-void/config"|g; s|".local/share/dwm
 #ifdef DWM_VOID_MINIMAL\
 \treturn;\
 #endif' "$build/dwm.new" > "$build/dwm.c"
-# Upstream delegates its bar to Quickshell. Restore the native bar ONLY here.
+# Upstream delegates its bar to Quickshell. Restore the native fallback ONLY here.
 for marker in 'The Quickshell panel handles drawing; the dwm bar is unused.' 'The external panel creates its own windows; skip dwm bar creation.' 'bh = 0; /\* Quickshell provides the panel. \*/' '^scanaltbars(void)$'; do
     [ "$(grep -c "$marker" "$build/dwm.c")" = 1 ] || { echo 'Quellstand geaendert: Leistenanpassung pruefen.' >&2; exit 1; }
 done
@@ -55,8 +55,11 @@ sed '/The Quickshell panel handles drawing; the dwm bar is unused\./{N;d;}; /The
 mv "$build/dwm.new" "$build/dwm.c"
 awk -f "$repo/void/bar.awk" "$build/dwm.c" > "$build/dwm.new"
 mv "$build/dwm.new" "$build/dwm.c"
+awk -f "$repo/void/quickshell.awk" "$build/dwm.c" > "$build/dwm.new"
+mv "$build/dwm.new" "$build/dwm.c"
 sed 's/MesloLGS Nerd Font Mono/monospace/g' "$build/config.def.h" > "$build/config.h"
 cp "$repo/void/power-menu.c" "$build/power-menu.c"
+cp "$repo/void/bar-bridge.c" "$build/bar-bridge.c"
 for header in logo.h logo-draw.h popup-grab.h; do cp "$repo/void/$header" "$build/$header"; done
 # No upstream Makefile install target is involved.
 cat > "$build/Makefile" <<'MAKE'
@@ -65,6 +68,7 @@ SRC = dwm.c drw.c util.c tomlparser.c
 all:
 	$(CC) $(CPPFLAGS) -DDWM_VOID_MINIMAL $(CFLAGS) -o dwm $(SRC) $(LDFLAGS) $(LDLIBS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o power-menu power-menu.c $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o bar-bridge bar-bridge.c $(LDFLAGS) $(LDLIBS)
 MAKE
 make -C "$build"
 for file in hotkeys.toml themes.toml window-rules.toml; do
@@ -131,16 +135,13 @@ set -eu
 export XDG_SESSION_TYPE=x11
 export XDG_CURRENT_DESKTOP=dwm
 export DESKTOP_SESSION=dwm-void
-# Restore the confirmed monitor layout before dwm reads screen geometry.
 sh "$HOME/.local/share/dwm-void/monitors.sh"
 sh "$HOME/.local/share/dwm-void/wallpaper.sh"
-# Statuszeile fuer die Leiste (Uhrzeit, WLAN, Akku) im Hintergrund.
 "$HOME/.local/share/dwm-void/status.sh" &
-# Optional session bus; no systemd services or upstream autostart.
 if command -v dbus-run-session >/dev/null 2>&1 && [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
-    exec dbus-run-session -- "$HOME/.local/share/dwm-void/dwm"
+    exec dbus-run-session -- sh "$HOME/.local/share/dwm-void/session.sh"
 fi
-exec "$HOME/.local/share/dwm-void/dwm"
+exec sh "$HOME/.local/share/dwm-void/session.sh"
 SESSION
 install -m 755 "$build/xinitrc" "$data/xinitrc"
 install -m 755 "$repo/void/status.sh" "$data/status.sh"
@@ -149,6 +150,11 @@ install -m 755 "$repo/void/wallpaper.sh" "$data/wallpaper.sh"
 install -m 755 "$build/power-menu" "$data/power-menu"
 install -m 755 "$repo/void/power-action.sh" "$data/power-action.sh"
 install -m 755 "$repo/void/control-action.sh" "$data/control-action.sh"
+install -m 755 "$build/bar-bridge" "$data/bar-bridge"
+install -m 755 "$repo/void/session.sh" "$data/session.sh"
+mkdir -p "$data/quickshell"
+install -m 644 "$repo/void/shell.qml" "$data/quickshell/shell.qml"
+install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
 [ "$mode" != --install ] || exit 0
 [ -z "${DISPLAY:-}" ] || { echo 'Bereits eine grafische Sitzung offen. Bitte aus der Konsole starten.' >&2; exit 1; }
