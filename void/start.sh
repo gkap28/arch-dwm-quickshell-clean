@@ -26,7 +26,7 @@ for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dw
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
-for path in "$data/modules.sh" "$data/module-details.sh" "$data/updates.sh" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/UpdateModule.qml" "$data/quickshell/update-symbol.svg" "$data/quickshell/ControlCenter.qml" "$data/quickshell/xbps.svg" "$data/quickshell/flatpak.svg"; do
+for path in "$data/keyboard-bridge" "$data/clock-format.sh" "$data/quickshell/Typography.qml" "$data/quickshell/KeyboardModule.qml" "$data/quickshell/FONT-LICENSE.txt" "$data/modules.sh" "$data/module-details.sh" "$data/updates.sh" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/UpdateModule.qml" "$data/quickshell/update-symbol.svg" "$data/quickshell/ControlCenter.qml" "$data/quickshell/xbps.svg" "$data/quickshell/flatpak.svg"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 build=$(mktemp -d "$data/build.XXXXXXXX")
@@ -63,6 +63,7 @@ mv "$build/dwm.new" "$build/dwm.c"
 sed 's/MesloLGS Nerd Font Mono/monospace/g' "$build/config.def.h" > "$build/config.h"
 cp "$repo/void/power-menu.c" "$build/power-menu.c"
 cp "$repo/void/bar-bridge.c" "$build/bar-bridge.c"
+cp "$repo/void/keyboard-bridge.c" "$build/keyboard-bridge.c"
 for header in logo.h logo-draw.h popup-grab.h; do cp "$repo/void/$header" "$build/$header"; done
 # No upstream Makefile install target is involved.
 cat > "$build/Makefile" <<'MAKE'
@@ -72,6 +73,7 @@ all:
 	$(CC) $(CPPFLAGS) -DDWM_VOID_MINIMAL $(CFLAGS) -o dwm $(SRC) $(LDFLAGS) $(LDLIBS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o power-menu power-menu.c $(LDFLAGS) $(LDLIBS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o bar-bridge bar-bridge.c $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o keyboard-bridge keyboard-bridge.c $(LDFLAGS) $(LDLIBS)
 MAKE
 make -C "$build"
 for file in hotkeys.toml themes.toml window-rules.toml; do
@@ -150,10 +152,12 @@ fi
 exec sh "$HOME/.local/share/dwm-void/session.sh"
 SESSION
 # The bar needs every QML asset; refuse a partial install instead of a black gap.
-for file in shell.qml launcher.qml StatusModules.qml PowerMenu.qml UpdateModule.qml ControlCenter.qml update-symbol.svg xbps.svg flatpak.svg logo.svg; do
+for file in shell.qml launcher.qml StatusModules.qml PowerMenu.qml UpdateModule.qml ControlCenter.qml Typography.qml KeyboardModule.qml update-symbol.svg xbps.svg flatpak.svg logo.svg; do
     [ -f "$repo/void/$file" ] || { echo "Fehlt im Quellordner: void/$file" >&2; exit 1; }
 done
 install -m 755 "$build/xinitrc" "$data/xinitrc"
+install -m 755 "$build/keyboard-bridge" "$data/keyboard-bridge"
+install -m 644 "$repo/void/clock-format.sh" "$data/clock-format.sh"
 install -m 755 "$repo/void/status.sh" "$data/status.sh"
 install -m 755 "$repo/void/monitors.sh" "$data/monitors.sh"
 install -m 755 "$repo/void/wallpaper.sh" "$data/wallpaper.sh"
@@ -163,6 +167,11 @@ install -m 755 "$repo/void/control-action.sh" "$data/control-action.sh"
 install -m 755 "$build/bar-bridge" "$data/bar-bridge"
 install -m 755 "$repo/void/session.sh" "$data/session.sh"
 mkdir -p "$data/quickshell"
+install -m 644 "$repo/void/FONT-LICENSE.txt" "$data/quickshell/FONT-LICENSE.txt"
+install -m 644 "$repo/void/Typography.qml" "$data/quickshell/Typography.qml"
+install -m 644 "$repo/void/KeyboardModule.qml" "$data/quickshell/KeyboardModule.qml"
+# Explicitly requested font only, no packages or global font configuration.
+sh "$repo/void/install-fonts.sh" || echo "Titus-Schrift nicht geladen; vorhandene Ersatzschrift bleibt aktiv." >&2
 install -m 644 "$repo/void/launcher.qml" "$data/quickshell/launcher.qml"
 install -m 644 "$repo/void/StatusModules.qml" "$data/quickshell/StatusModules.qml"
 install -m 644 "$repo/void/PowerMenu.qml" "$data/quickshell/PowerMenu.qml"

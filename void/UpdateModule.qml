@@ -73,7 +73,7 @@ Item {
             text: button.label
             color: root.foreground
             opacity: button.enabled ? 1 : 0.45
-            font.family: "monospace"; font.pixelSize: 13
+            font.family: Typography.family; font.pixelSize: 13
         }
         MouseArea {
             id: buttonMouse
@@ -95,7 +95,7 @@ Item {
             Image { source: "update-symbol.svg"; width: 13; height: 13; anchors.verticalCenter: parent.verticalCenter }
             Text {
                 text: !root.checked ? "…" : root.xbpsCount < 0 && root.flatpakCount < 0 ? "—" : (root.xbpsCount < 0 || root.flatpakCount < 0 ? "~" : "") + (Math.max(0,root.xbpsCount)+Math.max(0,root.flatpakCount))
-                color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                color: root.foreground; font.family: Typography.family; font.pixelSize: 14
             }
         }
         MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.opened = !root.opened; if (root.opened) root.refresh(); } }
@@ -127,7 +127,7 @@ Item {
                     Text {
                         Layout.fillWidth: true
                         text: "Update-Center"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 18; font.bold: true
+                        color: root.foreground; font.family: Typography.family; font.pixelSize: 18; font.bold: true
                     }
                     ShellButton { label: root.checking ? "Prüfe …" : "Aktualisieren"; enabled: !root.checking; onActivated: root.refresh() }
                     ShellButton { label: "Schließen"; onActivated: root.opened = false }
@@ -136,7 +136,7 @@ Item {
                     Layout.fillWidth: true
                     visible: root.message !== ""
                     text: root.message
-                    color: root.warning; font.family: "monospace"; font.pixelSize: 12
+                    color: root.warning; font.family: Typography.family; font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
                 Repeater {
@@ -162,11 +162,11 @@ Item {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 2
-                                Text { text: modelData.label; color: root.foreground; font.family: "monospace"; font.pixelSize: 13; font.bold: true }
+                                Text { text: modelData.label; color: root.foreground; font.family: Typography.family; font.pixelSize: 13; font.bold: true }
                                 RowLayout {
                                     spacing: 0
-                                    Text { text: root.statusLabel(modelData.count); color: root.statusColor(modelData.count); font.family: "monospace"; font.pixelSize: 12 }
-                                    Text { visible: modelData.count >= 0; text: "  |  " + root.summary(modelData.count); color: root.foreground; font.family: "monospace"; font.pixelSize: 12 }
+                                    Text { text: root.statusLabel(modelData.count); color: root.statusColor(modelData.count); font.family: Typography.family; font.pixelSize: 12 }
+                                    Text { visible: modelData.count >= 0; text: "  |  " + root.summary(modelData.count); color: root.foreground; font.family: Typography.family; font.pixelSize: 12 }
                                 }
                             }
                             ShellButton {

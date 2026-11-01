@@ -1,8 +1,10 @@
 #!/bin/sh
 # Fuellt die dwm-Leiste: Uhrzeit, WLAN und Akku. Laeuft als Hintergrundschleife.
 set -u
+. "$HOME/.local/share/dwm-void/clock-format.sh"
 while :; do
-    zeit=$(date '+%a %d.%m. %H:%M')
+    set -- $(date '+%w %d %m %H.%M')
+    zeit=$(clock_text "$@")
     wlan=''
     for w in /sys/class/net/*; do
         [ -d "$w/wireless" ] || continue

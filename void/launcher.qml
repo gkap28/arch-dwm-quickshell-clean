@@ -61,22 +61,22 @@ ShellRoot {
                     Rectangle { Layout.preferredWidth: 4; Layout.preferredHeight: 50; color: root.accent; radius: 2 }
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 2
-                        Text { Layout.fillWidth: true; text: "PROGRAMMVERZEICHNIS"; color: root.accent; font.family: "monospace"; font.pixelSize: 11; font.bold: true }
-                        Text { Layout.fillWidth: true; text: "Programme"; color: root.foreground; font.family: "monospace"; font.pixelSize: 24; font.bold: true }
+                        Text { Layout.fillWidth: true; text: "PROGRAMMVERZEICHNIS"; color: root.accent; font.family: Typography.family; font.pixelSize: 11; font.bold: true }
+                        Text { Layout.fillWidth: true; text: "Programme"; color: root.foreground; font.family: Typography.family; font.pixelSize: 24; font.bold: true }
                     }
-                    Text { text: root.applications.length + " Programme"; color: root.accent; font.family: "monospace"; font.pixelSize: 12 }
+                    Text { text: root.applications.length + " Programme"; color: root.accent; font.family: Typography.family; font.pixelSize: 12 }
                     Text { text: "×"; color: root.foreground; font.pixelSize: 18; MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Qt.quit() } }
                 }
                 Rectangle {
                     Layout.fillWidth: true; Layout.preferredHeight: 44
                     radius: 8; color: root.background; border.width: 1; border.color: root.accent
-                    Text { anchors.left: parent.left; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "/"; color: root.accent; font.family: "monospace"; font.pixelSize: 16 }
+                    Text { anchors.left: parent.left; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "/"; color: root.accent; font.family: Typography.family; font.pixelSize: 16 }
                     TextInput {
                         id: search
                         anchors.fill: parent; anchors.leftMargin: 38; anchors.rightMargin: 14
                         verticalAlignment: TextInput.AlignVCenter
                         color: root.foreground; selectionColor: root.surface; selectedTextColor: root.foreground
-                        font.family: "monospace"; font.pixelSize: 16
+                        font.family: Typography.family; font.pixelSize: 16
                         clip: true; focus: true
                         Component.onCompleted: forceActiveFocus()
                         onTextChanged: { root.query = text; root.select(0); }
@@ -94,8 +94,8 @@ ShellRoot {
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    Text { text: "KATEGORIEN"; color: root.accent; font.family: "monospace"; font.pixelSize: 11; font.bold: true }
-                    Text { text: root.results.length + " angezeigt"; color: root.muted; font.family: "monospace"; font.pixelSize: 11 }
+                    Text { text: "KATEGORIEN"; color: root.accent; font.family: Typography.family; font.pixelSize: 11; font.bold: true }
+                    Text { text: root.results.length + " angezeigt"; color: root.muted; font.family: Typography.family; font.pixelSize: 11 }
                 }
                 Flickable {
                     Layout.fillWidth: true; Layout.preferredHeight: 34
@@ -111,7 +111,7 @@ ShellRoot {
                                 width: categoryText.implicitWidth + 22; height: 28; radius: 6
                                 color: selected ? root.surface : categoryMouse.containsMouse ? "#4C566A" : root.surface
                                 border.width: 1; border.color: selected || categoryMouse.containsMouse ? root.accent : "#3B4252"
-                                Text { id: categoryText; anchors.centerIn: parent; text: modelData.label + " " + root.applications.filter(e => root.matches(e, modelData.id)).length; color: root.foreground; font.family: "monospace"; font.pixelSize: 12 }
+                                Text { id: categoryText; anchors.centerIn: parent; text: modelData.label + " " + root.applications.filter(e => root.matches(e, modelData.id)).length; color: root.foreground; font.family: Typography.family; font.pixelSize: 12 }
                                 MouseArea { id: categoryMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.category = modelData.id; root.select(0); search.forceActiveFocus(); } }
                             }
                         }
@@ -137,13 +137,13 @@ ShellRoot {
                             Image { Layout.preferredWidth: 28; Layout.preferredHeight: 28; source: Quickshell.iconPath(row.modelData.icon || "application-x-executable", true) }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 2
-                                Text { Layout.fillWidth: true; text: row.modelData.name; elide: Text.ElideRight; color: root.foreground; font.family: "monospace"; font.pixelSize: 14; font.bold: row.selected }
-                                Text { Layout.fillWidth: true; text: (row.modelData.genericName || row.modelData.comment || "") + "  ·  " + root.categoryLabel(row.modelData); elide: Text.ElideRight; color: root.muted; font.family: "monospace"; font.pixelSize: 12 }
+                                Text { Layout.fillWidth: true; text: row.modelData.name; elide: Text.ElideRight; color: root.foreground; font.family: Typography.family; font.pixelSize: 14; font.bold: row.selected }
+                                Text { Layout.fillWidth: true; text: (row.modelData.genericName || row.modelData.comment || "") + "  ·  " + root.categoryLabel(row.modelData); elide: Text.ElideRight; color: root.muted; font.family: Typography.family; font.pixelSize: 12 }
                             }
                         }
                         MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launch(row.index) }
                     }
-                    Text { anchors.centerIn: parent; visible: list.count === 0; text: "Keine Programme gefunden"; color: root.muted; font.family: "monospace"; font.pixelSize: 14 }
+                    Text { anchors.centerIn: parent; visible: list.count === 0; text: "Keine Programme gefunden"; color: root.muted; font.family: Typography.family; font.pixelSize: 14 }
                 }
             }
         }

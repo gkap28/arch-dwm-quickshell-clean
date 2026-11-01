@@ -86,7 +86,7 @@ ShellRoot {
                                     anchors.centerIn: parent
                                     text: workspaceButton.index + 1
                                     color: workspaceButton.selected ? root.workspaceSelectedText : root.foreground
-                                    font.family: "monospace"; font.pixelSize: 14
+                                    font.family: Typography.family; font.pixelSize: 14
                                     font.bold: workspaceButton.selected
                                 }
                                 MouseArea {
@@ -110,8 +110,9 @@ ShellRoot {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: root.status
+                    font.bold: true
                     color: root.foreground
-                    font.family: "monospace"; font.pixelSize: 14
+                    font.family: Typography.family; font.pixelSize: 14
                 }
                 UpdateModule {
                     panel: panel; home: root.home
@@ -124,6 +125,10 @@ ShellRoot {
                 anchors.right: parent.right
                 height: 28
                 spacing: 4
+                KeyboardModule {
+                    home: root.home; foreground: root.foreground
+                    surface: root.active; accent: root.workspaceBorder
+                }
                 StatusModules {
                     panel: panel; home: root.home
                     background: root.normal; foreground: root.foreground

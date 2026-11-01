@@ -1,6 +1,12 @@
 #!/bin/sh
 # Own only this session's children; never kill another shell, compositor or sound server.
 data=$HOME/.local/share/dwm-void
+# Session-local groups only; keep existing XKB options.
+if command -v setxkbmap >/dev/null 2>&1; then
+    setxkbmap -layout us,de,gr 2>/dev/null || :
+else
+    echo "Tastaturwechsel: setxkbmap fehlt." >&2
+fi
 "$data/dwm" &
 wm=$!
 panel=''

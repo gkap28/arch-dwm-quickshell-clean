@@ -131,17 +131,17 @@ Item {
                     Text {
                         visible: root.selectedAction !== null
                         text: "< Zurück"
-                        color: backMouse.containsMouse ? root.accent : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        color: backMouse.containsMouse ? root.accent : root.foreground; font.family: Typography.family; font.pixelSize: 13
                         MouseArea { id: backMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "menu" }
                     }
                     Text {
                         Layout.fillWidth: true
                         text: root.selectedAction ? root.selectedAction.label : "Power"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 13; font.letterSpacing: root.selectedAction ? 1 : 2
+                        color: root.foreground; font.family: Typography.family; font.pixelSize: 13; font.letterSpacing: root.selectedAction ? 1 : 2
                     }
                     Text {
                         text: "x"
-                        color: closeMouse.containsMouse ? root.accent : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        color: closeMouse.containsMouse ? root.accent : root.foreground; font.family: Typography.family; font.pixelSize: 13
                         MouseArea { id: closeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "" }
                     }
                 }
@@ -150,7 +150,7 @@ Item {
                     Layout.fillWidth: true
                     visible: root.message !== ""
                     text: root.message
-                    color: root.accent; font.family: "monospace"; font.pixelSize: 13
+                    color: root.accent; font.family: Typography.family; font.pixelSize: 13
                     wrapMode: Text.WordWrap
                 }
                 ColumnLayout {
@@ -173,12 +173,12 @@ Item {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.label
-                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: Typography.family; font.pixelSize: 13
                                 }
                                 Text {
                                     visible: modelData.confirm
                                     text: ">"
-                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: Typography.family; font.pixelSize: 13
                                 }
                             }
                             MouseArea {
@@ -199,13 +199,13 @@ Item {
                     Text {
                         Layout.fillWidth: true
                         text: root.selectedAction ? root.selectedAction.detail : ""
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        color: root.foreground; font.family: Typography.family; font.pixelSize: 13
                         wrapMode: Text.WordWrap
                     }
                     Text {
                         Layout.fillWidth: true
                         text: "Diese Aktion wirkt auf die laufende Sitzung oder den Rechner."
-                        color: root.accent; font.family: "monospace"; font.pixelSize: 12
+                        color: root.accent; font.family: Typography.family; font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
                     RowLayout {
@@ -216,7 +216,7 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: 30
                             enabled: !root.busy
-                            font.family: "monospace"; font.pixelSize: 13
+                            font.family: Typography.family; font.pixelSize: 13
                             text: "Abbrechen"
                             onClicked: root.opened = "menu"
                             contentItem: Text { text: cancelButton.text; color: root.foreground; font: cancelButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
@@ -227,7 +227,7 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: 30
                             enabled: !root.busy
-                            font.family: "monospace"; font.pixelSize: 13
+                            font.family: Typography.family; font.pixelSize: 13
                             text: root.busy ? "Läuft …" : "Bestätigen"
                             onClicked: { const a = root.actionFor(root.opened); if (a) root.run(a); }
                             contentItem: Text { text: confirmButton.text; color: root.foreground; font: confirmButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: confirmButton.enabled ? 1 : 0.45 }

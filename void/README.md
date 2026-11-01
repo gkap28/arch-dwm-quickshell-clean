@@ -86,3 +86,9 @@ Sicherheits-, Hintergrund- und Startertests erfolgreich. Zwei Xinerama-Monitore 
 ## Ton
 
 Void startet PipeWire nicht von selbst. Ist pipewire installiert und laeuft fuer dich noch nicht, startet die Sitzung pipewire, dazu wireplumber (wenn PipeWire es nicht schon selbst startet) und pipewire-pulse (falls installiert). Beim Abmelden endet nur dieser eigene Ton. Ein schon laufendes PipeWire bleibt unberuehrt. Meldungen: ~/.local/share/dwm-void/pipewire.log. Keine Systemdateien, keine Dienste, nichts in ~/.config. RTKit-Warnungen sind harmlos.
+
+## Schrift, Uhr und Tastatur
+
+Quickshell verwendet wie Titus MesloLGS Nerd Font Mono (normal und fett). Die beiden Originaldateien von Nerd Fonts v3.4.0 werden beim Einrichten mit SHA-256-Pruefung nur nach ~/.local/share/dwm-void/quickshell/fonts geladen; curl wird benoetigt. Keine Pakete und keine globale Schrifteinstellung werden veraendert. Bei fehlendem Netz bleibt eine Ersatzschrift und die Meldung; spaeter erneut sh void/start.sh --install ausfuehren.
+
+Uhr/Datum erscheinen fett als So 01 Nov- 13.40; die Uhr verwendet die lokale Rechnerzeit und deutsche Wochentage unabhaengig von der Spracheinstellung. Der anklickbare Tastaturtext rechts wechselt US → DE → GR → US; beide Leisten lesen denselben echten X11-Zustand. setxkbmap muss vorhanden sein (Void-Paket setxkbmap). Beim Anmelden startet diese Sitzung mit US, ohne Systemdateien oder bestehende XKB-Optionen zu veraendern.

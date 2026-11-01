@@ -108,11 +108,11 @@ Row {
         }
     }
     Timer { interval: 3000; running: root.opened !== ""; repeat: true; onTriggered: root.loadDetails() }
-    component Label: Text { color: root.foreground; font.family: "monospace"; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }
+    component Label: Text { color: root.foreground; font.family: Typography.family; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }
     component Section: Label { color: root.accent; font.pixelSize: 13; font.bold: true; Layout.topMargin: 8 }
     component ActionButton: Button {
         id: control
-        font.family: "monospace"; font.pixelSize: 12
+        font.family: Typography.family; font.pixelSize: 12
         implicitHeight: 34; implicitWidth: Math.max(64, contentItem.implicitWidth + 20)
         enabled: !root.busy
         contentItem: Text { text: control.text; color: root.foreground; font: control.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: control.enabled ? 1 : 0.45 }
@@ -174,7 +174,7 @@ Row {
             Text {
                 anchors.left: symbol.right; anchors.leftMargin: 4; anchors.verticalCenter: parent.verticalCenter
                 text: pill.audio ? (root.volume < 0 ? "—" : root.volume + "%") : "NET"
-                color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                color: root.foreground; font.family: Typography.family; font.pixelSize: 14
             }
             MouseArea {
                 id: mouse
@@ -197,7 +197,7 @@ Row {
                         id: hintText
                         anchors.centerIn: parent
                         text: pill.audio ? (root.volume < 0 ? "Ton nicht verfügbar" : root.muted ? "Stumm" : "Lautstärke") : root.network === "wifi" ? "WLAN verbunden" : root.network === "ethernet" ? "Kabel verbunden" : "Nicht verbunden"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 12
+                        color: root.foreground; font.family: Typography.family; font.pixelSize: 12
                     }
                 }
             }
@@ -346,7 +346,7 @@ Row {
                     anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
                     Label { text: root.selectedWifi ? root.selectedWifi.ssid : ""; font.pixelSize: 22; font.bold: true }
                     Label { text: "WLAN-Passwort" }
-                    TextField { id: password; Layout.fillWidth: true; echoMode: TextInput.Password; color: root.foreground; background: Rectangle { color: root.surface; radius: 6; border.width: 1; border.color: root.accent } onAccepted: connectWifi.clicked() }
+                    TextField { id: password; font.family: Typography.family; Layout.fillWidth: true; echoMode: TextInput.Password; color: root.foreground; background: Rectangle { color: root.surface; radius: 6; border.width: 1; border.color: root.accent } onAccepted: connectWifi.clicked() }
                     RowLayout {
                         ActionButton { text: "Abbrechen"; onClicked: { root.selectedWifi = null; password.text = ""; } }
                         ActionButton { id: connectWifi; text: "Verbinden"; enabled: !root.busy && password.text.length > 0; onClicked: { if (!root.selectedWifi) return; root.detailsAction("wifi", [root.selectedWifi.ssid, root.selectedWifi.bssid], password.text); password.text = ""; root.selectedWifi = null; } }

@@ -37,13 +37,13 @@ Item {
             anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }
             text: row.label
             color: rowMouse.containsMouse ? root.strong : root.foreground
-            font.family: "monospace"; font.pixelSize: 13
+            font.family: Typography.family; font.pixelSize: 13
         }
         Text {
             anchors { right: parent.right; rightMargin: 9; verticalCenter: parent.verticalCenter }
             text: row.navigates ? ">" : ""
             color: rowMouse.containsMouse ? root.strong : root.foreground
-            font.family: "monospace"; font.pixelSize: 13
+            font.family: Typography.family; font.pixelSize: 13
         }
         MouseArea {
             id: rowMouse
@@ -94,12 +94,12 @@ Item {
                         Layout.fillWidth: true
                         text: "Kontrollzentrum"
                         color: root.foreground
-                        font.family: "monospace"; font.pixelSize: 13; font.letterSpacing: 2
+                        font.family: Typography.family; font.pixelSize: 13; font.letterSpacing: 2
                     }
                     Text {
                         text: "x"
                         color: closeMouse.containsMouse ? root.accent : root.foreground
-                        font.family: "monospace"; font.pixelSize: 13
+                        font.family: Typography.family; font.pixelSize: 13
                         MouseArea { id: closeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = false }
                     }
                 }
