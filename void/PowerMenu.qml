@@ -4,7 +4,9 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// User-local power actions; confirmation except for locking.
+// Power menu with the same five session actions as the Titus panel:
+// reboot, logout, lock (no confirmation), suspend, shutdown.
+// Actions run through the user-local power-action.sh helper only.
 Item {
     id: root
     required property var panel
@@ -15,6 +17,7 @@ Item {
     required property string accent
     width: 28
     height: 28
+    // "" = closed, "menu" = action list, otherwise the id being confirmed.
     property string opened: ""
     property bool busy: false
     property string message: ""
@@ -95,14 +98,14 @@ Item {
         MouseArea { anchors.fill: parent; onClicked: root.opened = "" }
         Rectangle {
             id: card
-            readonly property int cardWidth: 300
+            readonly property int cardWidth: 276
             x: Math.max(8, parent.width - cardWidth - 8)
             width: cardWidth
-            height: cardColumn.implicitHeight + 32
+            height: cardColumn.implicitHeight + 20
             color: root.background
             border.width: 1
             border.color: root.accent
-            radius: 8
+            radius: 0
             focus: true
             Keys.onEscapePressed: {
                 if (root.opened !== "" && root.opened !== "menu") root.opened = "menu";
@@ -111,14 +114,21 @@ Item {
             MouseArea { anchors.fill: parent }
             ColumnLayout {
                 id: cardColumn
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
-                spacing: 10
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                spacing: 4
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 26
+                    Text {
+                        visible: root.selectedAction !== null
+                        text: "‹ Zurück"
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "menu" }
+                    }
                     Text {
                         Layout.fillWidth: true
                         text: root.selectedAction ? root.selectedAction.label : "Power"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 20; font.bold: true
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 14
                     }
                     Text {
                         text: "×"
@@ -146,8 +156,7 @@ Item {
                             Layout.preferredHeight: 36
                             radius: 6
                             color: rowMouse.containsMouse ? root.surface : root.background
-                            border.width: 1
-                            border.color: rowMouse.containsMouse ? root.accent : root.surface
+                            border.width: 0
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 10
@@ -212,7 +221,7 @@ Item {
                             font.family: "monospace"; font.pixelSize: 13
                             text: root.busy ? "Läuft …" : "Bestätigen"
                             onClicked: { const a = root.actionFor(root.opened); if (a) root.run(a); }
-                            contentItem: Text { text: confirmButton.text; color: root.foreground; font: confirmButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            contentItem: Text { text: confirmButton.text; color: root.foreground; font: confirmButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: confirmButton.enabled ? 1 : 0.45 }
                             background: Rectangle { radius: 6; color: confirmButton.hovered ? root.surface : root.background; border.width: 1; border.color: root.accent }
                         }
                     }

@@ -44,15 +44,17 @@ background: "#2E3440"; foreground: "#D8DEE9"; surface: "#434C5E"; accent: "#81A1
                 self.assertEqual(recorded(),[])
                 self.assertNotIn('1280x772+',command('xwininfo','-root','-tree'))
                 expected=[]
+                # Positions are inside the five actual visible QML action rows.
                 for index,action in enumerate(['reboot','logout','lock','suspend','shutdown']):
-                    click(1266,14); click(1080,111+38*index)
+                    click(1266,14); click(1080,91+38*index)
                     if action != 'lock':
                         self.assertEqual(recorded(),expected,'Selection must not execute '+action)
                         command('magick','import','-window','root',str(capture/(action+'-confirmation.png')))
+                        # Escape returns to the list without executing anything.
                         command('xdotool','key','Escape'); time.sleep(.2)
                         self.assertEqual(recorded(),expected)
-                        click(1080,111+38*index)
-                        click(1200,200 if action == 'suspend' else 176)
+                        click(1080,91+38*index)
+                        click(1200,176 if action == 'suspend' else 152)
                     expected.append(action)
                     self.assertEqual(recorded(),expected)
                     click(100,100)
