@@ -56,16 +56,21 @@ int main(int argc, char **argv) {
         long x, y, width, height;
         if (!integer(argv[2], &x) || !integer(argv[3], &y) ||
             !integer(argv[4], &width) || !integer(argv[5], &height) || width <= 0 || height <= 0) return 2;
-        unsigned int previous = Button1Mask | Button2Mask | Button3Mask;
+        Atom click = XInternAtom(d, "_DWM_VOID_DESKTOP_CLICK", False);
+        XSelectInput(d, root, PropertyChangeMask);
+        XSync(d, False);
         for (;;) {
-            Window r, child; int rx, ry, wx, wy; unsigned int mask;
-            if (!XQueryPointer(d, root, &r, &child, &rx, &ry, &wx, &wy, &mask)) { usleep(5000); continue; }
-            unsigned int buttons = mask & (Button1Mask | Button2Mask | Button3Mask);
-            if ((buttons & ~previous) && (rx < x || ry < y || rx >= x + width || ry >= y + height)) {
-                puts("outside"); fflush(stdout); break;
+            XEvent event; XNextEvent(d, &event);
+            if (event.type != PropertyNotify || event.xproperty.atom != click) continue;
+            Atom type; int format; unsigned long n, remaining; unsigned char *data = NULL;
+            int outside = 0;
+            if (XGetWindowProperty(d, root, click, 0, 2, False, XA_INTEGER,
+                    &type, &format, &n, &remaining, &data) == Success && format == 32 && n == 2 && data) {
+                long *position = (long *)data;
+                outside = position[0] < x || position[1] < y || position[0] >= x + width || position[1] >= y + height;
             }
-            previous = buttons;
-            usleep(5000);
+            if (data) XFree(data);
+            if (outside) { puts("outside"); fflush(stdout); break; }
         }
     } else if (argc == 2 && !strcmp(argv[1], "watch")) {
         XSelectInput(d, root, PropertyChangeMask); state(d, root);

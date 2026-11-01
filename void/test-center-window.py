@@ -24,8 +24,7 @@ class CenterWindowTests(starter.StarterTests):
         def command(*args): return subprocess.run(args, env=env, capture_output=True, text=True, check=True).stdout
         def click(x, y):
             command('xdotool', 'mousemove', str(x), str(y))
-            command('xdotool', 'mousedown', '1'); time.sleep(.08)
-            command('xdotool', 'mouseup', '1'); time.sleep(.5)
+            command('xdotool', 'click', '1'); time.sleep(.5)
         def capture(name): command('magick', 'import', '-window', 'root', str(captures/name))
         try:
             processes.append(subprocess.Popen(['Xvfb', ':186', '-screen', '0', '1280x800x24', '-nolisten', 'tcp'], env=env, stdout=log, stderr=log))

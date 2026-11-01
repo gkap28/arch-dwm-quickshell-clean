@@ -15,6 +15,16 @@ section == "client" && /term = termforwin\(c\);/ {
     print; print "\tif (!strcmp(c->name, \"Void Applications\")) c->bw = 0; /* QML owns its single border, including theme reload. */"; next
 }
 /^drawbar\(Monitor \*m\)$/ { section = "bar" }
+/^buttonpress\(XEvent \*e\)$/ { section = "button" }
+section == "button" && /click = ClkRootWin;/ {
+    print
+    print "\tif (ev->window == root) {"
+    print "\t\tlong position[2] = {ev->x_root, ev->y_root};"
+    print "\t\tXChangeProperty(dpy, root, XInternAtom(dpy, \"_DWM_VOID_DESKTOP_CLICK\", False), XA_INTEGER, 32, PropModeReplace, (unsigned char *)position, 2);"
+    print "\t\tXFlush(dpy);"
+    print "\t}"
+    next
+}
 /^clientmessage\(XEvent \*e\)$/ { section = "message" }
 /^managealtbar\(Window win, XWindowAttributes \*wa\)$/ { section = "manage" }
 /^unmanagealtbar\(Window w\)$/ { section = "unmanage" }
