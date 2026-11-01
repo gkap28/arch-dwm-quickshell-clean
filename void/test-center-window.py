@@ -8,6 +8,8 @@ import unittest
 spec = importlib.util.spec_from_file_location('starter', pathlib.Path(__file__).with_name('test-starter.py'))
 starter = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(starter)
+import os
+starter.ROOT = pathlib.Path(os.environ.get('VOID_TEST_SOURCE_ROOT', starter.ROOT))
 
 class CenterWindowTests(starter.StarterTests):
     def test_widgets_reload_and_fullscreen_facts(self):
@@ -20,7 +22,10 @@ class CenterWindowTests(starter.StarterTests):
         captures = pathlib.Path('/tmp/center-test/screenshots'); captures.mkdir(parents=True, exist_ok=True)
         log = open(self.base/'center.log', 'w')
         def command(*args): return subprocess.run(args, env=env, capture_output=True, text=True, check=True).stdout
-        def click(x, y): command('xdotool', 'mousemove', str(x), str(y)); command('xdotool', 'click', '1'); time.sleep(.5)
+        def click(x, y):
+            command('xdotool', 'mousemove', str(x), str(y))
+            command('xdotool', 'mousedown', '1'); time.sleep(.08)
+            command('xdotool', 'mouseup', '1'); time.sleep(.5)
         def capture(name): command('magick', 'import', '-window', 'root', str(captures/name))
         try:
             processes.append(subprocess.Popen(['Xvfb', ':186', '-screen', '0', '1280x800x24', '-nolisten', 'tcp'], env=env, stdout=log, stderr=log))
@@ -31,6 +36,18 @@ class CenterWindowTests(starter.StarterTests):
             shell = subprocess.Popen(['quickshell','--path',str(data/'quickshell/shell.qml')],env=env,stdout=log,stderr=log); processes.append(shell); time.sleep(2)
             click(14,14); capture('main.png')
             self.assertRegex(command('xwininfo','-root','-tree'),r'276x\d+\+6\+28 ')
+            # A press inside keeps the menu; an outside desktop press closes it.
+            click(100,50)
+            self.assertRegex(command('xwininfo','-root','-tree'),r'276x\d+\+6\+28 ')
+            click(600,600); capture('center-dismissed.png')
+            self.assertNotRegex(command('xwininfo','-root','-tree'),r'276x\d+\+6\+28 ')
+            click(1260,14)
+            self.assertRegex(command('xwininfo','-root','-tree'),r'276x\d+\+996\+28 ')
+            click(1100,50)
+            self.assertRegex(command('xwininfo','-root','-tree'),r'276x\d+\+996\+28 ')
+            click(600,600); capture('power-dismissed.png')
+            self.assertNotRegex(command('xwininfo','-root','-tree'),r'276x\d+\+996\+28 ')
+            click(14,14)
             click(100,180); capture('widgets.png')
             for y, key in [(90,'power'),(120,'volume'),(150,'network'),(180,'layout'),(210,'seconds')]:
                 click(150,y)

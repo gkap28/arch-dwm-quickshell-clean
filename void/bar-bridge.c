@@ -52,6 +52,21 @@ int main(int argc, char **argv) {
         XEvent event = {0}; event.xclient.type = ClientMessage; event.xclient.window = root;
         event.xclient.message_type = XInternAtom(d, "_DWM_VOID_RELOAD", False); event.xclient.format = 32;
         XSendEvent(d, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &event); XSync(d, False);
+    } else if (argc == 6 && !strcmp(argv[1], "outside")) {
+        long x, y, width, height;
+        if (!integer(argv[2], &x) || !integer(argv[3], &y) ||
+            !integer(argv[4], &width) || !integer(argv[5], &height) || width <= 0 || height <= 0) return 2;
+        unsigned int previous = Button1Mask | Button2Mask | Button3Mask;
+        for (;;) {
+            Window r, child; int rx, ry, wx, wy; unsigned int mask;
+            if (!XQueryPointer(d, root, &r, &child, &rx, &ry, &wx, &wy, &mask)) { usleep(5000); continue; }
+            unsigned int buttons = mask & (Button1Mask | Button2Mask | Button3Mask);
+            if ((buttons & ~previous) && (rx < x || ry < y || rx >= x + width || ry >= y + height)) {
+                puts("outside"); fflush(stdout); break;
+            }
+            previous = buttons;
+            usleep(5000);
+        }
     } else if (argc == 2 && !strcmp(argv[1], "watch")) {
         XSelectInput(d, root, PropertyChangeMask); state(d, root);
         for (;;) {

@@ -93,6 +93,14 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: { root.message = ""; root.opened = root.opened === "" ? "menu" : ""; }
     }
+    Process {
+        command: [root.home + "bar-bridge", "outside",
+            (root.panel.screen.x + Math.max(0, root.panel.width - popup.implicitWidth - 8)).toString(),
+            (root.panel.screen.y + root.panel.height).toString(),
+            popup.implicitWidth.toString(), popup.implicitHeight.toString()]
+        running: root.opened !== ""
+        stdout: SplitParser { onRead: data => { if (data.trim() === "outside") root.opened = ""; } }
+    }
     PopupWindow {
         id: popup
         anchor.window: root.panel

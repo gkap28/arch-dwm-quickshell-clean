@@ -34,6 +34,13 @@ Item {
         Layout.fillWidth: true; Layout.topMargin: 4; Layout.bottomMargin: 4
         implicitHeight: 1; color: CenterTheme.border; opacity: 0.55
     }
+    Process {
+        command: [root.home + "bar-bridge", "outside",
+            (root.panel.screen.x + 6).toString(), (root.panel.screen.y + root.panel.height).toString(),
+            popup.implicitWidth.toString(), popup.implicitHeight.toString()]
+        running: root.opened
+        stdout: SplitParser { onRead: data => { if (data.trim() === "outside") root.opened = false; } }
+    }
     PopupWindow {
         id: popup
         objectName: "voidControlCenter"
