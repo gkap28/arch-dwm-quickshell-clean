@@ -53,7 +53,7 @@ ShellRoot {
                 height: parent.height
                 Item {
                     width: 28; height: 28
-                    Image { anchors.centerIn: parent; width: 13; height: 13; source: "logo.svg" }
+                    Image { anchors.centerIn: parent; width: 22; height: 22; source: "logo.svg" }
                     MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu", "--control"]) }
                 }
                 Item {
