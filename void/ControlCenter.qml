@@ -1,10 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 
-// Titus ControlCenterWindow presentation (276 px card at x=6 below the bar,
-// Nord popup background, 1 px border, transparent rows with hover fill).
-// Actions are dispatched only through the user-local control-action.sh.
 Item {
     id: root
     required property var panel
@@ -12,109 +10,103 @@ Item {
     required property string background
     required property string foreground
     required property string accent
-    property string hover: "#4C566A"
-    property string strong: "#ECEFF4"
     property bool opened: false
+    property string page: ""
+    property string message: ""
     signal powerRequested()
     width: 0; height: 0
-
+    onOpenedChanged: { page = ""; message = ""; }
     function run(action) {
         root.opened = false;
-        Quickshell.execDetached(["sh", root.home + "control-action.sh", action,
-            root.panel.screen.x.toString(), root.panel.screen.y.toString()]);
+        Quickshell.execDetached(["sh", home + "control-action.sh", action, panel.screen.x.toString(), panel.screen.y.toString()]);
     }
-
-    component MenuRow: Rectangle {
-        id: row
-        required property string label
-        property bool navigates: false
-        signal activated()
-        Layout.fillWidth: true
-        implicitHeight: 28
-        radius: 6
-        color: rowMouse.containsMouse ? root.hover : "transparent"
-        Text {
-            anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }
-            text: row.label
-            color: rowMouse.containsMouse ? root.strong : root.foreground
-            font.family: Typography.family; font.pixelSize: 13
-        }
-        Text {
-            anchors { right: parent.right; rightMargin: 9; verticalCenter: parent.verticalCenter }
-            text: row.navigates ? ">" : ""
-            color: rowMouse.containsMouse ? root.strong : root.foreground
-            font.family: Typography.family; font.pixelSize: 13
-        }
-        MouseArea {
-            id: rowMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: row.activated()
-        }
+    function reload(action) {
+        if (operation.running) return;
+        message = ""; operation.command = ["sh", home + "center-action.sh", action]; operation.running = true;
+    }
+    Process {
+        id: operation
+        stdout: StdioCollector { onStreamFinished: root.message = text.trim() }
+        stderr: StdioCollector { onStreamFinished: if (text.trim()) root.message = text.trim() }
+        onExited: (code, status) => { if (code !== 0 && !root.message) root.message = "Aktion fehlgeschlagen."; }
     }
     component Separator: Rectangle {
-        Layout.fillWidth: true
-        Layout.topMargin: 2; Layout.bottomMargin: 2
-        implicitHeight: 1
-        color: root.accent; opacity: 0.55
+        Layout.fillWidth: true; Layout.topMargin: 4; Layout.bottomMargin: 4
+        implicitHeight: 1; color: CenterTheme.border; opacity: 0.55
     }
-
     PopupWindow {
         id: popup
         objectName: "voidControlCenter"
         anchor.window: root.panel
-        anchor.rect.x: 6
-        anchor.rect.y: root.panel.height
+        anchor.rect.x: 6; anchor.rect.y: root.panel.height
         implicitWidth: 276
-        implicitHeight: column.implicitHeight + 36
+        implicitHeight: column.implicitHeight + 16
         visible: root.opened
         grabFocus: true
         color: root.background
         onVisibleChanged: { if (visible) card.forceActiveFocus(); else root.opened = false; }
         Rectangle {
             id: card
-            anchors.fill: parent
-            color: root.background
-            border.width: 1
-            border.color: root.accent
-            radius: 0
+            anchors.fill: parent; color: root.background
+            border.width: 1; border.color: root.accent
             focus: true
             Keys.onEscapePressed: root.opened = false
             MouseArea { anchors.fill: parent }
             ColumnLayout {
                 id: column
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 8 }
                 spacing: 2
                 RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 26
-                    spacing: 8
-                    Text {
-                        Layout.fillWidth: true
-                        text: "Kontrollzentrum"
-                        color: root.foreground
-                        font.family: Typography.family; font.pixelSize: 13; font.letterSpacing: 2
-                    }
-                    Text {
-                        text: "x"
-                        color: closeMouse.containsMouse ? root.accent : root.foreground
-                        font.family: Typography.family; font.pixelSize: 13
-                        MouseArea { id: closeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = false }
-                    }
+                    Layout.fillWidth: true; Layout.preferredHeight: 28
+                    CenterRow { visible: root.page !== ""; text: "‹"; implicitWidth: 28; onClicked: { root.page = ""; root.message = ""; } }
+                    Text { Layout.fillWidth: true; text: root.page || "Kontrollzentrum"; color: root.foreground; font.family: Typography.family; font.pixelSize: 13 }
+                    CenterRow { text: "×"; implicitWidth: 28; onClicked: root.opened = false }
                 }
                 Separator {}
-                MenuRow { label: "Programme"; onActivated: root.run("apps") }
-                MenuRow { label: "Power"; navigates: true; onActivated: { root.opened = false; root.powerRequested(); } }
-                Separator {}
-                MenuRow { label: "Terminal"; onActivated: root.run("terminal") }
-                MenuRow { label: "Dateien"; onActivated: root.run("files") }
-                MenuRow { label: "Tastenbelegung"; onActivated: root.run("hotkeys") }
-                MenuRow { label: "Bildschirme"; onActivated: root.run("displays") }
-                Separator {}
-                MenuRow { label: "Lautstärke"; onActivated: root.run("volume") }
-                MenuRow { label: "Netzwerk"; onActivated: root.run("network") }
-                MenuRow { label: "Hintergrund"; onActivated: root.run("wallpaper") }
+                ColumnLayout {
+                    visible: root.page === ""; Layout.fillWidth: true; spacing: 2
+                    CenterRow { Layout.fillWidth: true; text: "Programme"; onClicked: root.run("apps") }
+                    CenterRow { Layout.fillWidth: true; text: "Power"; onClicked: { root.opened = false; root.powerRequested(); } }
+                    CenterRow { Layout.fillWidth: true; text: "Quick Actions"; navigates: true; onClicked: root.page = text }
+                    Separator {}
+                    CenterRow { Layout.fillWidth: true; text: "Quick Widgets"; navigates: true; onClicked: root.page = text }
+                    CenterRow { Layout.fillWidth: true; text: "Power Settings"; navigates: true; onClicked: root.page = text }
+                    Separator {}
+                    CenterRow { Layout.fillWidth: true; text: "Settings"; onClicked: root.page = text }
+                    CenterRow { Layout.fillWidth: true; text: "System Info"; onClicked: root.run("system-info") }
+                    Separator {}
+                }
+                ColumnLayout {
+                    visible: root.page === "Quick Actions"; Layout.fillWidth: true; spacing: 2
+                    CenterRow { Layout.fillWidth: true; text: "Reload Quickshell"; enabled: !operation.running; onClicked: root.reload("reload-quickshell") }
+                    Separator {}
+                    CenterRow { Layout.fillWidth: true; text: "Reload dwm"; enabled: !operation.running; onClicked: root.reload("reload-dwm") }
+                    Separator {}
+                }
+                ColumnLayout {
+                    visible: root.page === "Quick Widgets"; Layout.fillWidth: true; spacing: 2
+                    Repeater {
+                        model: [{key:"power",label:"Powermenu"},{key:"volume",label:"Volume"},{key:"network",label:"Netzwerk"},{key:"layout",label:"Layout"},{key:"seconds",label:"Clock seconds"}]
+                        CenterRow {
+                            required property var modelData
+                            Layout.fillWidth: true; text: modelData.label
+                            selected: CenterPreferences[modelData.key]
+                            detail: selected ? "ON" : "OFF"; enabled: !CenterPreferences.busy
+                            onClicked: CenterPreferences.setValue(modelData.key, selected ? 0 : 1)
+                        }
+                    }
+                    Separator {}
+                }
+                Text {
+                    visible: root.page === "Power Settings" || root.page === "Settings"
+                    Layout.fillWidth: true; text: "Noch nicht eingerichtet"; color: root.foreground
+                    font.family: Typography.family; font.pixelSize: 13; wrapMode: Text.WordWrap
+                }
+                Text {
+                    visible: text !== ""; Layout.fillWidth: true
+                    text: root.message || CenterPreferences.message
+                    color: CenterTheme.warning; font.family: Typography.family; font.pixelSize: 12; wrapMode: Text.WordWrap
+                }
             }
         }
     }

@@ -26,6 +26,13 @@ for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dw
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
+for file in center-settings.sh center-action.sh system-info.sh; do
+    [ ! -L "$data/$file" ] || { echo "Abbruch: symbolischer Link: $data/$file" >&2; exit 1; }
+done
+for file in CenterTheme.qml CenterPreferences.qml CenterRow.qml system-info.qml; do
+    [ ! -L "$data/quickshell/$file" ] || { echo "Abbruch: symbolischer Link: $data/quickshell/$file" >&2; exit 1; }
+    [ -f "$repo/void/$file" ] || { echo "Fehlt: void/$file" >&2; exit 1; }
+done
 for path in "$data/keyboard-bridge" "$data/clock-format.sh" "$data/quickshell/Typography.qml" "$data/quickshell/KeyboardModule.qml" "$data/quickshell/FONT-LICENSE.txt" "$data/modules.sh" "$data/module-details.sh" "$data/updates.sh" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/UpdateModule.qml" "$data/quickshell/update-symbol.svg" "$data/quickshell/ControlCenter.qml" "$data/quickshell/xbps.svg" "$data/quickshell/flatpak.svg"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
@@ -167,6 +174,8 @@ install -m 755 "$repo/void/control-action.sh" "$data/control-action.sh"
 install -m 755 "$build/bar-bridge" "$data/bar-bridge"
 install -m 755 "$repo/void/session.sh" "$data/session.sh"
 mkdir -p "$data/quickshell"
+for file in center-settings.sh center-action.sh system-info.sh; do install -m 755 "$repo/void/$file" "$data/$file"; done
+for file in CenterTheme.qml CenterPreferences.qml CenterRow.qml system-info.qml; do install -m 644 "$repo/void/$file" "$data/quickshell/$file"; done
 install -m 644 "$repo/void/FONT-LICENSE.txt" "$data/quickshell/FONT-LICENSE.txt"
 install -m 644 "$repo/void/Typography.qml" "$data/quickshell/Typography.qml"
 install -m 644 "$repo/void/KeyboardModule.qml" "$data/quickshell/KeyboardModule.qml"

@@ -3,7 +3,8 @@
 set -u
 . "$HOME/.local/share/dwm-void/clock-format.sh"
 while :; do
-    set -- $(date '+%w %d %m %H.%M')
+    seconds=$(sh "$HOME/.local/share/dwm-void/center-settings.sh" read 2>/dev/null | sed -n 's/^seconds=//p')
+    if [ "$seconds" = 1 ]; then set -- $(date '+%w %d %m %H.%M.%S'); else set -- $(date '+%w %d %m %H.%M'); fi
     zeit=$(clock_text "$@")
     wlan=''
     for w in /sys/class/net/*; do
@@ -32,5 +33,5 @@ while :; do
     [ -n "$wlan" ] && line="$wlan | $line"
     [ -n "$bat" ] && line="$bat | $line"
     xsetroot -name "$line"
-    sleep 30
+    sleep 1
 done

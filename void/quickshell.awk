@@ -54,6 +54,7 @@ section == "bar" && /int x, w, tw = 0;/ {
     print "\t}"
 }
 section == "message" && /if \(cme->message_type == netatom\[NetCurrentDesktop\]\)/ {
+    print "\tif (cme->message_type == XInternAtom(dpy, \"_DWM_VOID_RELOAD\", False) && cme->format == 32) { raise(SIGUSR1); return; }"
     print "\tif (cme->message_type == XInternAtom(dpy, \"_DWM_VOID_FOCUS\", False) && cme->format == 32) {"
     print "\t\tfor (Monitor *m = mons; m; m = m->next)"
     print "\t\t\tif (m->mx == cme->data.l[0] && m->my == cme->data.l[1] && selmon != m) { unfocus(selmon->sel, 0); selmon = m; focus(NULL); }"

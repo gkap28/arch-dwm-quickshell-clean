@@ -126,6 +126,7 @@ ShellRoot {
                 height: 28
                 spacing: 4
                 KeyboardModule {
+                    visible: CenterPreferences.layout
                     home: root.home; foreground: root.foreground
                     surface: root.active; accent: root.workspaceBorder
                 }
@@ -136,6 +137,7 @@ ShellRoot {
                 }
                 PowerMenu {
                     id: power
+                    visible: CenterPreferences.power
                     panel: panel; home: root.home
                     background: root.normal; foreground: root.foreground
                     surface: root.active; accent: root.workspaceBorder

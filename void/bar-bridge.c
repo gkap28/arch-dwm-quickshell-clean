@@ -48,6 +48,10 @@ int main(int argc, char **argv) {
         event.xclient.message_type = XInternAtom(d, "_DWM_VOID_FOCUS", False); event.xclient.format = 32;
         event.xclient.data.l[0] = x; event.xclient.data.l[1] = y;
         XSendEvent(d, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &event); XSync(d, False);
+    } else if (argc == 2 && !strcmp(argv[1], "reload")) {
+        XEvent event = {0}; event.xclient.type = ClientMessage; event.xclient.window = root;
+        event.xclient.message_type = XInternAtom(d, "_DWM_VOID_RELOAD", False); event.xclient.format = 32;
+        XSendEvent(d, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &event); XSync(d, False);
     } else if (argc == 2 && !strcmp(argv[1], "watch")) {
         XSelectInput(d, root, PropertyChangeMask); state(d, root);
         for (;;) {

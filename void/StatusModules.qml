@@ -140,7 +140,7 @@ Row {
         }
     }
     Repeater {
-        model: ["network", "audio"]
+        model: (CenterPreferences.network ? ["network"] : []).concat(CenterPreferences.volume ? ["audio"] : [])
         Rectangle {
             id: pill
             required property string modelData

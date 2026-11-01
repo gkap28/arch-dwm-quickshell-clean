@@ -91,4 +91,10 @@ Void startet PipeWire nicht von selbst. Ist pipewire installiert und laeuft fuer
 
 Quickshell verwendet wie Titus MesloLGS Nerd Font Mono (normal und fett). Die beiden Originaldateien von Nerd Fonts v3.4.0 werden beim Einrichten mit SHA-256-Pruefung nur nach ~/.local/share/dwm-void/quickshell/fonts geladen; curl wird benoetigt. Keine Pakete und keine globale Schrifteinstellung werden veraendert. Bei fehlendem Netz bleibt eine Ersatzschrift und die Meldung; spaeter erneut sh void/start.sh --install ausfuehren.
 
-Uhr/Datum erscheinen fett als So 01 Nov- 13.40; die Uhr verwendet die lokale Rechnerzeit und deutsche Wochentage unabhaengig von der Spracheinstellung. Der anklickbare Tastaturtext rechts wechselt US → DE → GR → US; beide Leisten lesen denselben echten X11-Zustand. setxkbmap muss vorhanden sein (Void-Paket setxkbmap). Beim Anmelden startet diese Sitzung mit US, ohne Systemdateien oder bestehende XKB-Optionen zu veraendern.
+Uhr/Datum erscheinen fett als So 01 Nov - 13.40; die Uhr verwendet die lokale Rechnerzeit und deutsche Wochentage unabhaengig von der Spracheinstellung. Der anklickbare Tastaturtext rechts wechselt US → DE → GR → US; beide Leisten lesen denselben echten X11-Zustand. setxkbmap muss vorhanden sein (Void-Paket setxkbmap). Beim Anmelden startet diese Sitzung mit US, ohne Systemdateien oder bestehende XKB-Optionen zu veraendern.
+
+## Kontrollzentrum: erster Ausbau
+
+Kompaktes Nord-Menue unter der Leiste: Programme, Power, Quick Actions, Quick Widgets, Power Settings, Settings, System Info. Programme und Power bleiben erhalten. Quick Actions fordert das Neuladen nur dieser Quickshell-Datei beziehungsweise der privaten dwm-Konfiguration an; offene Programme werden nicht absichtlich beendet. Quick Widgets schaltet Power, Volume, Netzwerk, Layout und Uhrsekunden sofort auf beiden Leisten. Die Einstellungen stehen in ~/.local/share/dwm-void/config/center.conf und bleiben bei der Installation erhalten. System Info zeigt lokale echte Rechnerangaben bildschirmfuellend auf dem angeklickten Monitor.
+
+Wegen des vereinbarten begrenzten Umfangs sind Power Settings (automatische Sperrzeit) und die vollstaendigen Settings noch nicht eingerichtet; das Untermenue sagt dies ausdruecklich. Keine automatische Sperre oder Bildschirmabschaltung wird durch diesen ersten Ausbau eingeschaltet.
