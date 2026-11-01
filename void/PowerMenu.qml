@@ -1,0 +1,223 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+
+// User-local power actions; confirmation except for locking.
+Item {
+    id: root
+    required property var panel
+    required property string home
+    required property string background
+    required property string foreground
+    required property string surface
+    required property string accent
+    width: 28
+    height: 28
+    property string opened: ""
+    property bool busy: false
+    property string message: ""
+    property bool suspendAvailable: false
+    readonly property var selectedAction: actionFor(opened)
+    readonly property var actions: [
+        { id: "reboot", label: "Neustart", detail: "Startet den Rechner neu.", confirm: true },
+        { id: "logout", label: "Abmelden", detail: "Beendet die laufende Sitzung.", confirm: true },
+        { id: "lock", label: "Sperren", detail: "Sperrt die Sitzung.", confirm: false },
+        { id: "suspend", label: "Ruhezustand", detail: "Versetzt den Rechner in Bereitschaft.", confirm: true },
+        { id: "shutdown", label: "Ausschalten", detail: "Schaltet den Rechner aus.", confirm: true }
+    ]
+    function actionFor(id) {
+        for (const a of actions) if (a.id === id) return a;
+        return null;
+    }
+    function request(a) {
+        if (busy) return;
+        message = "";
+        if (a.id === "suspend" && !suspendAvailable) {
+            message = "Ruhezustand wird auf diesem System nicht unterstützt (elogind/loginctl fehlt oder verweigert).";
+            return;
+        }
+        if (a.confirm) { opened = a.id; return; }
+        run(a);
+    }
+    function run(a) {
+        if (busy) return;
+        busy = true;
+        message = "";
+        powerAction.pending = a.id;
+        powerAction.running = true;
+    }
+    Process {
+        id: powerAction
+        property string pending: ""
+        command: ["sh", root.home + "power-action.sh", pending]
+        onExited: (code, status) => {
+            root.busy = false;
+            if (code !== 0) root.message = "Aktion fehlgeschlagen — bitte Dienst oder Programm prüfen.";
+        }
+    }
+    Process {
+        id: suspendCheck
+        command: ["sh", "-c", "command -v loginctl >/dev/null 2>&1 && loginctl can-suspend 2>/dev/null || echo no"]
+        running: true
+        stdout: SplitParser { onRead: data => { const t = data.trim(); if (t !== "") root.suspendAvailable = t === "yes"; } }
+    }
+    Canvas {
+        anchors.centerIn: parent
+        width: 13; height: 13
+        onPaint: {
+            const c = getContext("2d"); c.reset();
+            c.scale(width / 28, height / 28);
+            c.strokeStyle = root.foreground; c.lineWidth = 2.4; c.lineCap = "round";
+            c.beginPath(); c.arc(14, 15, 7, -Math.PI / 4, Math.PI * 1.25); c.stroke();
+            c.beginPath(); c.moveTo(14, 5); c.lineTo(14, 14); c.stroke();
+        }
+    }
+    MouseArea {
+        id: powerMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: { root.message = ""; root.opened = root.opened === "" ? "menu" : ""; }
+    }
+    PopupWindow {
+        id: popup
+        anchor.window: root.panel
+        anchor.rect.x: 0
+        anchor.rect.y: root.panel.height
+        implicitWidth: root.panel.width
+        implicitHeight: root.panel.screen ? Math.max(0, root.panel.screen.height - root.panel.height) : 700
+        visible: root.opened !== ""
+        grabFocus: true
+        onVisibleChanged: if (visible) card.forceActiveFocus()
+        color: "transparent"
+        MouseArea { anchors.fill: parent; onClicked: root.opened = "" }
+        Rectangle {
+            id: card
+            readonly property int cardWidth: 300
+            x: Math.max(8, parent.width - cardWidth - 8)
+            width: cardWidth
+            height: cardColumn.implicitHeight + 32
+            color: root.background
+            border.width: 1
+            border.color: root.accent
+            radius: 8
+            focus: true
+            Keys.onEscapePressed: {
+                if (root.opened !== "" && root.opened !== "menu") root.opened = "menu";
+                else root.opened = "";
+            }
+            MouseArea { anchors.fill: parent }
+            ColumnLayout {
+                id: cardColumn
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
+                spacing: 10
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.selectedAction ? root.selectedAction.label : "Power"
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 20; font.bold: true
+                    }
+                    Text {
+                        text: "×"
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 18
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "" }
+                    }
+                }
+                Rectangle { Layout.fillWidth: true; height: 1; color: root.surface }
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.message !== ""
+                    text: root.message
+                    color: root.accent; font.family: "monospace"; font.pixelSize: 13
+                    wrapMode: Text.WordWrap
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: root.opened === "menu"
+                    spacing: 2
+                    Repeater {
+                        model: root.actions
+                        Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36
+                            radius: 6
+                            color: rowMouse.containsMouse ? root.surface : root.background
+                            border.width: 1
+                            border.color: rowMouse.containsMouse ? root.accent : root.surface
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.label
+                                    color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                                }
+                                Text {
+                                    visible: modelData.confirm
+                                    text: "›"
+                                    color: root.accent; font.family: "monospace"; font.pixelSize: 14
+                                }
+                            }
+                            MouseArea {
+                                id: rowMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                enabled: !root.busy
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.request(modelData)
+                            }
+                        }
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: root.opened !== "" && root.opened !== "menu"
+                    spacing: 10
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.selectedAction ? root.selectedAction.detail : ""
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Diese Aktion wirkt auf die laufende Sitzung oder den Rechner."
+                        color: root.accent; font.family: "monospace"; font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Button {
+                            id: cancelButton
+                            Layout.fillWidth: true
+                            implicitHeight: 34
+                            enabled: !root.busy
+                            font.family: "monospace"; font.pixelSize: 13
+                            text: "Abbrechen"
+                            onClicked: root.opened = "menu"
+                            contentItem: Text { text: cancelButton.text; color: root.foreground; font: cancelButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            background: Rectangle { radius: 6; color: cancelButton.hovered ? root.surface : root.background; border.width: 1; border.color: root.surface }
+                        }
+                        Button {
+                            id: confirmButton
+                            Layout.fillWidth: true
+                            implicitHeight: 34
+                            enabled: !root.busy
+                            font.family: "monospace"; font.pixelSize: 13
+                            text: root.busy ? "Läuft …" : "Bestätigen"
+                            onClicked: { const a = root.actionFor(root.opened); if (a) root.run(a); }
+                            contentItem: Text { text: confirmButton.text; color: root.foreground; font: confirmButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                            background: Rectangle { radius: 6; color: confirmButton.hovered ? root.surface : root.background; border.width: 1; border.color: root.accent }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

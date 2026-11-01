@@ -4,6 +4,11 @@ import Quickshell.Io
 
 ShellRoot {
     id: root
+    // Self report for remote diagnosis; visible in quickshell.log.
+    Component.onCompleted: console.log(
+        "VOID-BAR Quickshell " + (Quickshell.version || "?") +
+        " Bildschirme=" + Quickshell.screens.length + " " +
+        Quickshell.screens.map(s => s.name + "@" + s.x + "," + s.y + " " + s.width + "x" + s.height).join(" | "))
     property var monitors: []
     property string status: ""
     readonly property string normal: "#2E3440"
@@ -48,7 +53,7 @@ ShellRoot {
                 height: parent.height
                 Item {
                     width: 28; height: 28
-                    Image { anchors.centerIn: parent; width: 22; height: 22; source: "logo.svg" }
+                    Image { anchors.centerIn: parent; width: 13; height: 13; source: "logo.svg" }
                     MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu", "--control"]) }
                 }
                 Item {
@@ -107,17 +112,10 @@ ShellRoot {
                     background: root.normal; foreground: root.foreground
                     surface: root.active; accent: root.workspaceBorder
                 }
-                Item {
-                width: 28; height: 28
-                Canvas {
-                    anchors.fill: parent
-                    onPaint: {
-                        const c = getContext("2d"); c.reset(); c.strokeStyle = root.foreground; c.lineWidth = 2; c.lineCap = "round";
-                        c.beginPath(); c.arc(14, 15, 7, -Math.PI / 4, Math.PI * 1.25); c.stroke();
-                        c.beginPath(); c.moveTo(14, 5); c.lineTo(14, 14); c.stroke();
-                    }
-                }
-                MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu"]) }
+                PowerMenu {
+                    panel: panel; home: root.home
+                    background: root.normal; foreground: root.foreground
+                    surface: root.active; accent: root.workspaceBorder
                 }
             }
         }

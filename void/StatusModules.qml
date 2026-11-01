@@ -153,11 +153,11 @@ Row {
             Canvas {
                 id: symbol
                 anchors.left: parent.left; anchors.leftMargin: 6; anchors.verticalCenter: parent.verticalCenter
-                width: 20; height: 20
+                width: 13; height: 13
                 property string stateKey: root.network + root.muted + root.volume
                 onStateKeyChanged: requestPaint()
                 onPaint: {
-                    const c = getContext("2d"); c.reset(); c.strokeStyle = root.foreground; c.fillStyle = root.foreground; c.lineWidth = 1.6; c.lineCap = "round";
+                    const c = getContext("2d"); c.reset(); c.scale(width / 20, height / 20); c.strokeStyle = root.foreground; c.fillStyle = root.foreground; c.lineWidth = 2.2; c.lineCap = "round";
                     if (pill.audio) {
                         c.beginPath(); c.moveTo(3,8); c.lineTo(7,8); c.lineTo(11,4); c.lineTo(11,16); c.lineTo(7,12); c.lineTo(3,12); c.closePath(); c.stroke();
                         if (root.muted || root.volume < 0) { c.beginPath(); c.moveTo(14,7); c.lineTo(18,13); c.moveTo(18,7); c.lineTo(14,13); c.stroke(); }
