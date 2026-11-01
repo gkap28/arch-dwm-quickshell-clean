@@ -59,18 +59,31 @@ int main(int argc, char **argv) {
         Atom click = XInternAtom(d, "_DWM_VOID_DESKTOP_CLICK", False);
         XSelectInput(d, root, PropertyChangeMask);
         XSync(d, False);
+        /* Two independent signals: dwm's root-click property, and a pointer poll
+         * that still sees desktop presses while another client grabs the mouse. */
+        int was_pressed = 1;
         for (;;) {
-            XEvent event; XNextEvent(d, &event);
-            if (event.type != PropertyNotify || event.xproperty.atom != click) continue;
-            Atom type; int format; unsigned long n, remaining; unsigned char *data = NULL;
             int outside = 0;
-            if (XGetWindowProperty(d, root, click, 0, 2, False, XA_INTEGER,
-                    &type, &format, &n, &remaining, &data) == Success && format == 32 && n == 2 && data) {
-                long *position = (long *)data;
-                outside = position[0] < x || position[1] < y || position[0] >= x + width || position[1] >= y + height;
+            while (XPending(d)) {
+                XEvent event; XNextEvent(d, &event);
+                if (event.type != PropertyNotify || event.xproperty.atom != click) continue;
+                Atom type; int format; unsigned long n, remaining; unsigned char *data = NULL;
+                if (XGetWindowProperty(d, root, click, 0, 2, False, XA_INTEGER,
+                        &type, &format, &n, &remaining, &data) == Success && format == 32 && n == 2 && data) {
+                    long *position = (long *)data;
+                    if (position[0] < x || position[1] < y || position[0] >= x + width || position[1] >= y + height) outside = 1;
+                }
+                if (data) XFree(data);
             }
-            if (data) XFree(data);
+            Window r, child; int rx, ry, wx, wy; unsigned int mask;
+            if (XQueryPointer(d, root, &r, &child, &rx, &ry, &wx, &wy, &mask)) {
+                int pressed = (mask & (Button1Mask | Button2Mask | Button3Mask)) != 0;
+                if (pressed && !was_pressed && child == None &&
+                    (rx < x || ry < y || rx >= x + width || ry >= y + height)) outside = 1;
+                was_pressed = pressed;
+            }
             if (outside) { puts("outside"); fflush(stdout); break; }
+            usleep(10000);
         }
     } else if (argc == 2 && !strcmp(argv[1], "watch")) {
         XSelectInput(d, root, PropertyChangeMask); state(d, root);
