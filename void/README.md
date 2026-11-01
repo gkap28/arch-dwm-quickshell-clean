@@ -1,8 +1,8 @@
 # Georgs Void-Grundlage
 
-Getrennter Einstieg vom Ausgangsstand 1a86bbcbb9077984df0848061f6c41bd87282503. Hauptzweig, Makefile, install.sh und Originalquellen bleiben unveraendert.
+Getrennter Einstieg vom festen Ausgangsstand 1a86bbcbb9077984df0848061f6c41bd87282503. Hauptzweig, Makefile, install.sh und Originalquellen bleiben unveraendert. Die heutigen Originaldokumente nennen Fedora; dies bescheinigt keine Arch-Kompatibilitaet des Gesamtprojekts.
 
-## Auf vorbereitetem Void, ohne sudo
+## Auf deinem vorbereiteten Void, ohne sudo
 
 ```sh
 git clone --branch void-starter --single-branch https://github.com/gkap28/arch-dwm-quickshell-clean.git dwm-void
@@ -10,38 +10,76 @@ cd dwm-void
 sh void/start.sh
 ```
 
-Kein sudo make install und kein install.sh. Alle Pakete installierst du selbst. Benoetigt: cc, make, pkg-config, awk, Xorg/startx, xsetroot, Alacritty, eine funktionierende Schrift. pkg-config-Module: x11 xft xinerama xrender imlib2 x11-xcb xcb xcb-res fontconfig freetype2. Quickshell ist noch nicht erforderlich.
+Der letzte Befehl prueft die Voraussetzungen, uebersetzt und richtet die Grundlage nur fuer dein Benutzerkonto ein und startet den Desktop mit startx. Git clone allein startet nichts. KEIN sudo make install und KEIN install.sh verwenden.
+
+Du installierst alle Pakete selbst. Benoetigt: cc, make, pkg-config, Xorg mit startx, xsetroot (Void-Paket xsetroot), Alacritty und eine funktionierende Schrift. Benoetigte pkg-config-Module: x11 xft xinerama xrender imlib2 x11-xcb xcb xcb-res fontconfig freetype2. Auf Void heissen zwei deiner genannten Pakete libXinerama-devel und harfbuzz-devel. Quickshell und HarfBuzz sind fuer diesen ersten Einstieg nicht erforderlich. Deine Grafikkarte muss mit Xorg funktionieren.
 
 Nur pruefen: sh void/start.sh --check
-Nur einrichten: sh void/start.sh --install
+Nur vorbereiten: sh void/start.sh --install
+Spaeter aus der Konsole erneut starten:
+```sh
+startx "$HOME/.local/share/dwm-void/xinitrc" -- -nolisten tcp
+```
 
-## Desktop
+## Der Desktop
 
-Jeder Monitor zeigt Arbeitsflaechen 1-9, auch leere. Super+1 bis 9 wechselt nur auf dem Monitor mit dem Mauszeiger/Fokus; der andere Monitor bleibt auf seiner Arbeitsflaeche. Datum und Uhrzeit erscheinen mittig auf beiden Leisten, mit WLAN/Akku falls vorhanden. Aktualisierung alle 30 Sekunden.
+Oben eine schmale Leiste auf jedem Monitor: links alle neun Arbeitsflaechen, mittig Datum, Uhrzeit und gegebenenfalls WLAN/Akku, alle 30 Sekunden frisch. Leere Arbeitsflaechen bleiben sichtbar. Noch ohne Kontrollzentrum. Super+X oder Super+Return: Alacritty. Super+J/K: Fenster wechseln; Super+1 bis 9: Arbeitsflaechen wechseln; Super+Shift+C: Fenster schliessen; Super+Shift+Q: zur Konsole zurueck.
 
-Ein vorhandenes Bild aus ~/Pictures/backgrounds wird mit feh auf beiden Monitoren gesetzt. Benoetigt das selbst installierte Void-Paket feh. Kein Download, keine ~/.fehbg. Fehlendes feh oder fehlende Bilder verhindern den Start nicht. Unterschiedliche Bilder je Monitor folgen erst beim Kontrollzentrum.
+Ein vorhandenes Bild aus ~/Pictures/backgrounds wird mit feh auf beiden Monitoren gesetzt. Benoetigt das selbst installierte Void-Paket feh. Es wird kein Bild heruntergeladen und keine ~/.fehbg geschrieben. Fehlendes feh oder fehlende Bilder verhindern den Desktop-Start nicht. Unterschiedliche Bilder je Monitor folgen erst beim spaeteren Kontrollzentrum.
 
-## Programmtasten
+Arbeitsflaechen wechseln per Linksklick auf jedem Monitor unabhaengig. Rechts oeffnet ein gezeichnetes Power-Symbol das benutzereigene Ausschaltmenue: Neustart, Abmelden, Sperren, Ruhezustand, Ausschalten. Wie im Vorbild verlangen alle Aktionen ausser Sperren eine Bestaetigung. Escape oder Klick ausserhalb schliesst das Menue. Dies ist vorerst ein kleines X11-Menue, nicht das komplette Quickshell-Kontrollzentrum. Sperren braucht slock oder i3lock; Ruhezustand braucht elogind/loginctl. Neustart/Ausschalten nutzen loginctl, andernfalls fragt Alacritty ueber sudo nach deinem Passwort fuer den Systembefehl shutdown. Keine Systemdienste oder Berechtigungsregeln werden veraendert.
 
-Nach git pull: sh void/update-hotkeys.sh.
-Super+Q: Fenster schliessen. Super+Shift+Return: Thunar. Super+B: Brave. Super+Return und Super+X: Alacritty. Super+Shift+Q: Konsole.
-Die erste vorherige Tastendatei wird als hotkeys.toml.before-app-keys gesichert. Unverwandte Tasten bleiben erhalten; automatische Neuladung ohne Neustart.
+Die Leiste verwendet eigene Nord-Farben: Hintergrund #2E3440, aktive Arbeitsflaeche #434C5E. Das gilt auch bei abweichenden alten themes.toml-Dateien; Fensterfarben und gespeicherte Einstellungen werden nicht veraendert. Das Power-Symbol braucht keine besondere Symbolschrift.
 
-## Monitoranordnung
+## Erste Quickshell-Leiste fuer Void
 
-HDMI-A-0: 2560x1080 links bei 0x0. DisplayPort-2: 1920x1080 rechts bei 2560x0. monitors.sh stellt dies vor dwm wieder her. Fehlende Ausgaenge und xrandr-Fehler blockieren den Start nicht.
+Die Arbeitsflaechen verwenden jetzt Titus-Rahmen: 22x22, Rundung 6, 1 Pixel Nord-Rahmen bei Auswahl oder Mauszeiger, Abstand 1. Im Kontrollzentrum oeffnet „Programme“ einen Nord-Programmstarter mit Suche, Pfeiltasten, Enter und Escape. Er verwendet installierte Desktop-Eintraege und bleibt getrennt von ~/.config. Die Fensterfarben anderer Anwendungen bleiben unveraendert.
+Wenn Picom installiert ist, startet es mit der Void-Sitzung und verwendet seine vorhandenen Einstellungen. Meldungen: ~/.local/share/dwm-void/picom.log. Ein bereits laufender anderer Compositor wird nicht beendet; die Sitzung beendet nur ihren eigenen Picom-Prozess. Keine Paketinstallation und keine neue ~/.config-Datei.
 
-## Updates
+Wenn quickshell installiert ist, startet die eigene session.sh eine getrennte Leiste aus ~/.local/share/dwm-void/quickshell/shell.qml. Deine andere Quickshell-Konfiguration und ~/.config bleiben unberuehrt. Links dein Logo mit dem ersten Kontrollmenue, Arbeitsflaechen 1-9 je Monitor, mittig der gemeinsame Status, rechts das Power-Symbol. Das Ausschaltmenue liegt jetzt direkt in Quickshell: Neustart, Abmelden, Sperren, Ruhezustand und Ausschalten. Alle Aktionen ausser Sperren verlangen eine Bestaetigung. Das native Menue bleibt als Rueckfall erhalten. Logo, Ton-, NET- und Power-Symbole sind 13 Pixel gross, der Leistentext 14 Pixel. Das vollstaendige Quickshell-Kontrollzentrum folgt schrittweise.
 
-Im bestehenden Klon: git pull; sh void/start.sh --install. Offene Arbeiten speichern, Super+Shift+Q, dann aus der Konsole sh void/start.sh. Bei automatischem startx startet der Desktop sofort neu.
+bar-bridge liest den bestehenden X11-Monitorstatus und sendet eng begrenzte Arbeitsflaechenwuensche mit Monitorposition. Kein Nachahmen von Tastendruecken, kein sudo. Fehlt Quickshell oder beendet es sich, bleibt die native Nord-Leiste als Rueckfall. Die Sitzung beendet nur die von ihr gestartete Quickshell-Instanz. Startmeldungen stehen unter ~/.local/share/dwm-void/quickshell.log.
+
+Nach git pull: sh void/start.sh --install; danach Arbeiten speichern und den Desktop neu starten. Die Quickshell-Variante wurde wirklich unter Xvfb gestartet: Arbeitsflaechen per QML angeklickt, Bruecke fuer beide nachgebildeten dwm-Monitore geprueft, Logo-/Power-Menue geoeffnet und Rueckfall nach Quickshell-Ende geprueft. Qt meldet in dieser Xvfb-Umgebung nur einen Ausgang; zwei echte Quickshell-Ausgaenge und Void-Hardware bleiben fuer Georgs Rechner zu bestaetigen.
+
+## Ton und NET beim Anklicken
+
+Die vorherigen kleinen Statusfenster sind durch die Titus-Aufteilung in Nord ersetzt: Audio (360 Pixel breit) mit Lautstaerke, Stumm, Ausgabegeraeten, Mikrofon und Mediensteuerung; Netzwerk (620x680) mit Aktiv, WLAN, gespeicherten Verbindungen und Verbindungseditor. Escape und ein Klick ausserhalb schliessen die Fenster. Auf kleineren Bildschirmen bleibt der Inhalt scrollbar. Die Texte sind auf Deutsch; die Farben anderer Programme bleiben unveraendert.
+
+Vorhandenes `pactl` mit laufendem PulseAudio/PipeWire-Pulse liefert Ton und Geraete, `playerctl` liefert Medien. `nmcli` mit laufendem NetworkManager liefert Netzlisten und Verbindungsaktionen. Fehlende Dienste werden angezeigt, nicht installiert oder eingeschaltet; eine bestehende andere Netzwerkverwaltung bleibt unangetastet. WLAN-Passwoerter gehen nur ueber die Standardeingabe an nmcli, nicht in Befehlsargumente oder Meldungsdateien. Echte Dienste und beide physischen Void-Monitore muss Georg pruefen; die QML-Fenster werden separat mit Quickshell 0.3.2 unter Xvfb geprueft.
+
+## Zusaetzliche Programmtasten
+
+## Updates neben der Uhr
+
+Das Titus-Paketsymbol (13 Pixel, ohne Symbolschrift) zeigt die gemeinsame Zahl fuer XBPS und Flatpak. Ein Klick oeffnet Nord-Knoepfe „XBPS updaten“ und „Flatpak updaten“ mit getrennten Zahlen. XBPS prueft nur die bereits gespeicherten Paketlisten; neue Listen werden erst beim bewussten Update geladen. Flatpak zaehlt Benutzer- und Systeminstallation. „~“ vor der Zahl bedeutet unvollstaendige Pruefung, „—“ nicht verfuegbar. Die Pruefung laeuft alle fuenf Minuten mit Zeitgrenzen und installiert nichts.
+
+XBPS startet Alacritty mit sudo fuer /usr/bin/xbps-install -Su; nur dieser Systembefehl wird erhoeht, kein Benutzer-Helfer. Flatpak startet im Terminal nacheinander update --user und update --system. Beide zeigen ihre eigenen Rueckfragen; keine automatische Bestaetigung. Das Terminal bleibt fuer das Ergebnis offen. Echte Paketupdates und Alacritty auf Void sind noch von Georg zu pruefen; QML-Klicks verwenden harmlose Ersatzaktionen.
+
+Nach `git pull` im Projektordner: `sh void/update-hotkeys.sh`.
+Super+Q schliesst das aktive Fenster, Super+Shift+Return startet Thunar,
+Super+B startet Brave (brave, brave-browser oder brave-browser-stable),
+Super+Return startet Alacritty. Super+X und Super+Shift+Q bleiben erhalten.
+Thunar und Brave muessen bereits installiert sein. Die erste vorherige
+Tastendatei wird als hotkeys.toml.before-app-keys im gleichen isolierten Ordner gesichert.
+Die Tasten werden beim Speichern automatisch neu geladen; kein Desktop-Neustart noetig.
+
+## Monitoranordnung nach Neustart
+
+HDMI-A-0: 2560x1080 links bei 0x0. DisplayPort-2: 1920x1080 rechts bei 2560x0.
+Nach `git pull` einmal `sh void/start.sh --install` ausfuehren.
+Die Anordnung wird vor jedem Desktop-Start ueber das benutzereigene monitors.sh wiederhergestellt.
+Die vorhandenen Bilder ~/Pictures/backgrounds/nord2560.png und ~/Pictures/backgrounds/arch-dwm-avatar.png werden HDMI-A-0 beziehungsweise DisplayPort-2 zugeordnet. wallpaper.sh gleicht die Xinerama-Reihenfolge mit den benannten Ausgaengen ab; die Reihenfolge darf auch rechts-vor-links sein. feh speichert dabei keine andere Desktop-Konfiguration. Beide Dateien muessen lesbar vorhanden sein.
+Sind nicht beide Monitore angeschlossen oder scheitert xrandr, bleibt der Desktop-Start moeglich.
+Keine Aenderung an ~/.xinitrc, ~/.zprofile oder Systemdateien.
 
 ## Sicherheit
 
-Nur ~/.local/share/dwm-void wird beschrieben: dwm, xinitrc, status.sh, monitors.sh, wallpaper.sh und config. Vorhandene TOML-Dateien bleiben erhalten. ~/.config, ~/.xinitrc, /usr, Dienste und Pakete bleiben unangetastet. Anpassungen fuer Leiste und Start erfolgen ausschliesslich in einer temporaeren Baukopie. Xorg/startx kann seine eigenen Sitzungsdateien anlegen.
+Nur ~/.local/share/dwm-void wird beschrieben: dwm, xinitrc, status.sh, monitors.sh, wallpaper.sh und config mit hotkeys.toml, themes.toml und window-rules.toml. Vorhandene TOML-Dateien bleiben erhalten; der temporaere Bauordner wird entfernt. ~/.config, ~/.xinitrc, /usr, Dienste und Pakete werden nicht angefasst. Xorg/startx kann seine eigenen normalen Sitzungsdateien anlegen. In einer privaten Baukopie werden die Original-Start-/Stop-Routinen und der automatische Themen-Helfer abgeschaltet und die TOML-Pfade umgeleitet. Der originale Quelltext bleibt unveraendert.
 
 ## Pruefstand
 
-Sicherheits-, Hintergrund- und Startertests erfolgreich. Zwei Xinerama-Monitore mit Georgs Groessen wurden unter Xvfb nachgebildet: Arbeitsflaechen 1-9 wechseln unabhaengig; ein Fenster auf dem anderen Monitor bleibt sichtbar. Beide Leisten aktualisieren ohne Fokuswechsel; Bilder bestaetigen 1-9 und mittigen Status. Xterm ersetzte Alacritty im Fenstertest. Dies ersetzt keine Hardwarepruefung. Georg bestaetigte Desktop, Leiste und Monitoranordnung nach Neustart auf Void. Neue Leisten und Hintergrund sind dort noch zu bestaetigen. Quickshell, Ton und Kontrollzentrum sind noch nicht portiert.
+Sicherheits-, Hintergrund- und Startertests erfolgreich. Zwei Xinerama-Monitore mit Georgs Groessen wurden unter Xvfb nachgebildet: Arbeitsflaechen 1-9 wechseln unabhaengig auf jedem Monitor; ein Fenster auf dem anderen Monitor bleibt sichtbar. Beide Leisten aktualisieren den Status auch ohne Fokuswechsel; Bilder bestaetigen alle neun Arbeitsflaechen und mittigen Status. Xterm ersetzte Alacritty im Fenstertest. Diese nachgebildeten Tests ersetzen keine Hardwarepruefung. Georg bestaetigte Desktop, Leiste und Monitoranordnung nach Neustart auf Void; die neuen Leisten und der Hintergrund sind dort noch zu bestaetigen. Quickshell, Ton und Kontrollzentrum sind noch nicht portiert.
 
 ## Ton
 

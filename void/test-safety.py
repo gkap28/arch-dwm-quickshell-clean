@@ -47,7 +47,7 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual((self.home/'.xinitrc').read_text(),'keep')
         self.assertEqual((self.home/'.config/quickshell/shell.qml').read_text(),'keep')
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.repo.iterdir() if p.is_file()})
-        self.assertEqual(sorted(p.name for p in data.iterdir()),['bar-bridge','config','control-action.sh','dwm','modules.sh','monitors.sh','power-action.sh','power-menu','quickshell','session.sh','status.sh','wallpaper.sh','xinitrc'])
+        self.assertEqual(sorted(p.name for p in data.iterdir()),['bar-bridge','config','control-action.sh','dwm','module-details.sh','modules.sh','monitors.sh','power-action.sh','power-menu','quickshell','session.sh','status.sh','updates.sh','wallpaper.sh','xinitrc'])
         self.assertIn('status.sh" &',(data/'xinitrc').read_text())
         session=(data/'xinitrc').read_text()
         self.assertLess(session.index('/monitors.sh'),session.index('/session.sh'))

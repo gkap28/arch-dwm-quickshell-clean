@@ -93,14 +93,23 @@ ShellRoot {
                     }
                 }
             }
-            Text {
+            Row {
                 anchors.centerIn: parent
-                width: Math.max(0, parent.width - 2 * Math.max(workspaces.width, rightModules.width) - 16)
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                text: root.status
-                color: root.foreground
-                font.family: "monospace"; font.pixelSize: 14
+                spacing: 8
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, Math.max(0, panel.width - 2 * Math.max(workspaces.width, rightModules.width) - 90))
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    text: root.status
+                    color: root.foreground
+                    font.family: "monospace"; font.pixelSize: 14
+                }
+                UpdateModule {
+                    panel: panel; home: root.home
+                    background: root.normal; foreground: root.foreground
+                    surface: root.active; accent: root.workspaceBorder
+                }
             }
             Row {
                 id: rightModules

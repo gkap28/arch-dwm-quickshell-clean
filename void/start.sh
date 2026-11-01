@@ -26,7 +26,7 @@ for path in "$HOME/.local" "$HOME/.local/share" "$data" "$data/config" "$data/dw
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 mkdir -p "$data/config"
-for path in "$data/modules.sh" "$data/module-details.sh" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml"; do
+for path in "$data/modules.sh" "$data/module-details.sh" "$data/updates.sh" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/UpdateModule.qml" "$data/quickshell/update-symbol.svg"; do
     [ ! -L "$path" ] || { echo "Abbruch: symbolischer Link: $path" >&2; exit 1; }
 done
 build=$(mktemp -d "$data/build.XXXXXXXX")
@@ -150,7 +150,7 @@ fi
 exec sh "$HOME/.local/share/dwm-void/session.sh"
 SESSION
 # The bar needs every QML asset; refuse a partial install instead of a black gap.
-for file in shell.qml launcher.qml StatusModules.qml PowerMenu.qml logo.svg; do
+for file in shell.qml launcher.qml StatusModules.qml PowerMenu.qml UpdateModule.qml update-symbol.svg logo.svg; do
     [ -f "$repo/void/$file" ] || { echo "Fehlt im Quellordner: void/$file" >&2; exit 1; }
 done
 install -m 755 "$build/xinitrc" "$data/xinitrc"
@@ -167,10 +167,13 @@ install -m 644 "$repo/void/shell.qml" "$data/quickshell/shell.qml"
 install -m 644 "$repo/void/launcher.qml" "$data/quickshell/launcher.qml"
 install -m 644 "$repo/void/StatusModules.qml" "$data/quickshell/StatusModules.qml"
 install -m 644 "$repo/void/PowerMenu.qml" "$data/quickshell/PowerMenu.qml"
+install -m 644 "$repo/void/UpdateModule.qml" "$data/quickshell/UpdateModule.qml"
+install -m 644 "$repo/void/update-symbol.svg" "$data/quickshell/update-symbol.svg"
+install -m 755 "$repo/void/updates.sh" "$data/updates.sh"
 install -m 755 "$repo/void/modules.sh" "$data/modules.sh"
 install -m 755 "$repo/void/module-details.sh" "$data/module-details.sh"
 install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
-for file in "$data/quickshell/shell.qml" "$data/quickshell/launcher.qml" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/logo.svg"; do
+for file in "$data/quickshell/shell.qml" "$data/quickshell/launcher.qml" "$data/quickshell/StatusModules.qml" "$data/quickshell/PowerMenu.qml" "$data/quickshell/UpdateModule.qml" "$data/quickshell/update-symbol.svg" "$data/quickshell/logo.svg"; do
     [ -f "$file" ] || { echo "Install fehlgeschlagen: $file" >&2; exit 1; }
 done
 echo 'Void-Grundlage bereit. Super+X: Alacritty. Super+Shift+Q: zurueck zur Konsole.'
