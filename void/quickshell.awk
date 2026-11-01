@@ -3,7 +3,17 @@
 # windows are never destroyed, and a native bar adopts an unowned Quickshell
 # panel on its monitor again (e.g. after a DisplayPort monitor wakes up).
 /^isaltbar\(Window win, XWindowAttributes \*wa\)$/ { section = "isalt" }
-section == "isalt" && /Atom wtype;/ { print; print "\tif (wa && wa->width <= wa->height) return 0; /* Qt helper windows are no bars. */"; next }
+section == "isalt" && /Atom wtype;/ { print; print "\tif (wa && (wa->width <= wa->height || wa->height > 64)) return 0; /* Only thin panels, never launcher/popup windows. */"; next }
+/^manage\(Window w, XWindowAttributes \*wa\)$/ { section = "client" }
+section == "client" && /term = termforwin\(c\);/ {
+    print "\t\tif (!strcmp(c->name, \"Void Applications\")) {"
+    print "\t\t\tc->mon = recttomon(wa->x, wa->y, wa->width, wa->height);"
+    print "\t\t\tc->tags = c->mon->tagset[c->mon->seltags]; c->isfloating = 1;"
+    print "\t\t}"
+}
+/c->bw = dyn_borderpx;/ {
+    print; print "\tif (!strcmp(c->name, \"Void Applications\")) c->bw = 0; /* QML owns its single border, including theme reload. */"; next
+}
 /^drawbar\(Monitor \*m\)$/ { section = "bar" }
 /^clientmessage\(XEvent \*e\)$/ { section = "message" }
 /^managealtbar\(Window win, XWindowAttributes \*wa\)$/ { section = "manage" }
@@ -28,7 +38,7 @@ section == "bar" && /int x, w, tw = 0;/ {
     print "\t\tif (XQueryTree(dpy, root, &d1, &d2, &wins, &n)) {"
     print "\t\t\tfor (unsigned int i = 0; i < n && !found; i++) {"
     print "\t\t\t\tXWindowAttributes qa; Monitor *o;"
-    print "\t\t\t\tif (wins[i] == m->barwin || !XGetWindowAttributes(dpy, wins[i], &qa) || qa.override_redirect || qa.map_state != IsViewable || qa.width <= qa.height) continue;"
+    print "\t\t\t\tif (wins[i] == m->barwin || !XGetWindowAttributes(dpy, wins[i], &qa) || qa.override_redirect || qa.map_state != IsViewable || qa.width <= qa.height || qa.height > 64) continue;"
     print "\t\t\t\tif (!wmclasscontains(wins[i], altbarclass, \"\") || recttomon(qa.x, qa.y, qa.width, qa.height) != m || INTERSECT(qa.x, qa.y, qa.width, qa.height, m) <= 0) continue;"
     print "\t\t\t\tfor (o = mons; o && o->barwin != wins[i]; o = o->next);"
     print "\t\t\t\tif (!o) found = wins[i];"

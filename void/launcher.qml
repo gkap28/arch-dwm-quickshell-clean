@@ -45,6 +45,9 @@ ShellRoot {
         screen: Quickshell.screens.find(s => s.x === Number(Quickshell.env("DWM_VOID_LAUNCHER_X")) && s.y === Number(Quickshell.env("DWM_VOID_LAUNCHER_Y"))) || Quickshell.screens[0]
         implicitWidth: screen ? Math.min(820, screen.width) : 820
         implicitHeight: screen ? Math.min(600, screen.height) : 600
+        // Fixed hints make this an actual floating window under dwm too.
+        minimumSize: Qt.size(implicitWidth, implicitHeight)
+        maximumSize: Qt.size(implicitWidth, implicitHeight)
         color: root.background
         visible: true
         onVisibleChanged: if (!visible) Qt.quit()

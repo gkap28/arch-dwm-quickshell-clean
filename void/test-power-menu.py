@@ -39,10 +39,10 @@ background: "#2E3440"; foreground: "#D8DEE9"; surface: "#434C5E"; accent: "#81A1
                 click(1266,14)
                 capture=pathlib.Path('/tmp/void-power-check'); capture.mkdir(exist_ok=True)
                 command('magick','import','-window','root',str(capture/'menu.png'))
-                self.assertIn('1280x772+',command('xwininfo','-root','-tree')+(home/'log').read_text())
+                self.assertIn('276x',command('xwininfo','-root','-tree'))
                 command('xdotool','key','Escape'); time.sleep(.2)
                 self.assertEqual(recorded(),[])
-                self.assertNotIn('1280x772+',command('xwininfo','-root','-tree'))
+                self.assertNotIn('276x',command('xwininfo','-root','-tree'))
                 expected=[]
                 # Positions are inside the five actual visible QML action rows.
                 for index,action in enumerate(['reboot','logout','lock','suspend','shutdown']):
@@ -57,7 +57,7 @@ background: "#2E3440"; foreground: "#D8DEE9"; surface: "#434C5E"; accent: "#81A1
                         click(1200,176 if action == 'suspend' else 152)
                     expected.append(action)
                     self.assertEqual(recorded(),expected)
-                    click(100,100)
+                    command('xdotool','key','Escape'); command('xdotool','key','Escape'); time.sleep(.2)
                 self.assertIsNone(panel.poll(),(home/'log').read_text())
                 self.assertNotIn('TypeError',(home/'log').read_text())
                 print('Five real QML actions recorded; four require confirmation; Escape/outside click safe. No real power action executed.')

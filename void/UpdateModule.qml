@@ -53,17 +53,17 @@ Item {
         MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.opened = !root.opened; if (root.opened) root.refresh(); } }
     }
     PopupWindow {
-        anchor.window: root.panel; anchor.rect.x: 0; anchor.rect.y: root.panel.height
-        implicitWidth: root.panel.width
-        implicitHeight: root.panel.screen ? root.panel.screen.height-root.panel.height : 700
-        visible: root.opened; grabFocus: true; color: "transparent"
+        anchor.window: root.panel; anchor.rect.x: Math.max(0, (root.panel.width - implicitWidth) / 2); anchor.rect.y: root.panel.height
+        implicitWidth: Math.min(380, root.panel.width)
+        implicitHeight: content.implicitHeight + 32
+        visible: root.opened; grabFocus: true; color: root.background
         onVisibleChanged: if (visible) card.forceActiveFocus()
         MouseArea { anchors.fill: parent; onClicked: root.opened = false }
         Rectangle {
             id: card
-            x: Math.max(0,(parent.width-width)/2); width: Math.min(380,parent.width)
+            x: 0; width: parent.width
             height: content.implicitHeight+32
-            color: root.background; border.width: 1; border.color: root.accent; radius: 8
+            color: root.background; border.width: 1; border.color: root.accent; radius: 0
             Keys.onEscapePressed: root.opened = false
             MouseArea { anchors.fill: parent }
             ColumnLayout {

@@ -68,7 +68,7 @@ Item {
     }
     Canvas {
         anchors.centerIn: parent
-        width: 13; height: 13
+        width: 15; height: 15
         onPaint: {
             const c = getContext("2d"); c.reset();
             c.scale(width / 28, height / 28);
@@ -87,19 +87,19 @@ Item {
     PopupWindow {
         id: popup
         anchor.window: root.panel
-        anchor.rect.x: 0
+        anchor.rect.x: Math.max(0, root.panel.width - implicitWidth - 8)
         anchor.rect.y: root.panel.height
-        implicitWidth: root.panel.width
-        implicitHeight: root.panel.screen ? Math.max(0, root.panel.screen.height - root.panel.height) : 700
+        implicitWidth: 276
+        implicitHeight: cardColumn.implicitHeight + 20
         visible: root.opened !== ""
         grabFocus: true
         onVisibleChanged: if (visible) card.forceActiveFocus()
-        color: "transparent"
+        color: root.background
         MouseArea { anchors.fill: parent; onClicked: root.opened = "" }
         Rectangle {
             id: card
             readonly property int cardWidth: 276
-            x: Math.max(8, parent.width - cardWidth - 8)
+            x: 0
             width: cardWidth
             height: cardColumn.implicitHeight + 20
             color: root.background
