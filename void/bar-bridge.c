@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 static int integer(const char *s, long *out) {
     char *end; *out = strtol(s, &end, 10);
     return *s && !*end && *out >= -32768 && *out <= 32767;
@@ -40,6 +41,13 @@ int main(int argc, char **argv) {
         event.xclient.message_type = XInternAtom(d, "_DWM_VOID_VIEW", False); event.xclient.format = 32;
         event.xclient.data.l[0] = tag; event.xclient.data.l[1] = x; event.xclient.data.l[2] = y;
         XSendEvent(d, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &event); XFlush(d);
+    } else if (argc == 4 && !strcmp(argv[1], "focus")) {
+        long x, y;
+        if (!integer(argv[2], &x) || !integer(argv[3], &y)) return 2;
+        XEvent event = {0}; event.xclient.type = ClientMessage; event.xclient.window = root;
+        event.xclient.message_type = XInternAtom(d, "_DWM_VOID_FOCUS", False); event.xclient.format = 32;
+        event.xclient.data.l[0] = x; event.xclient.data.l[1] = y;
+        XSendEvent(d, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &event); XSync(d, False);
     } else if (argc == 2 && !strcmp(argv[1], "watch")) {
         XSelectInput(d, root, PropertyChangeMask); state(d, root);
         for (;;) {

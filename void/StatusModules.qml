@@ -116,7 +116,7 @@ Row {
         implicitHeight: 34; implicitWidth: Math.max(64, contentItem.implicitWidth + 20)
         enabled: !root.busy
         contentItem: Text { text: control.text; color: root.foreground; font: control.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: control.enabled ? 1 : 0.45 }
-        background: Rectangle { radius: 6; color: control.hovered ? root.surface : root.background; border.width: 1; border.color: control.activeFocus ? root.accent : root.surface }
+        background: Rectangle { radius: 6; color: control.hovered ? "#4C566A" : root.surface; border.width: 1; border.color: control.hovered || control.activeFocus ? root.accent : "#3B4252" }
     }
     function action(name, value) {
         if (nativeAction(name, value)) return;
@@ -148,8 +148,8 @@ Row {
             width: audio ? 80 : 66
             height: 26
             y: 1; radius: 6
-            color: mouse.containsMouse || root.opened === modelData ? root.surface : root.background
-            border.width: 1; border.color: root.opened === modelData ? root.accent : root.surface
+            color: root.opened === modelData ? root.surface : mouse.containsMouse ? "#4C566A" : "transparent"
+            border.width: 1; border.color: root.opened === modelData || mouse.containsMouse ? root.accent : "transparent"
             Canvas {
                 id: symbol
                 anchors.left: parent.left; anchors.leftMargin: 6; anchors.verticalCenter: parent.verticalCenter
@@ -190,9 +190,9 @@ Row {
                 visible: mouse.containsMouse && root.opened === ""
                 implicitWidth: hintText.implicitWidth + 20
                 implicitHeight: 30
-                color: "transparent"
+                color: root.background
                 Rectangle {
-                    anchors.fill: parent; color: root.background; radius: 6; border.width: 1; border.color: root.accent
+                    anchors.fill: parent; color: root.background; radius: 0; border.width: 1; border.color: root.accent
                     Text {
                         id: hintText
                         anchors.centerIn: parent
@@ -206,26 +206,28 @@ Row {
     PopupWindow {
         id: popup
         anchor.window: root.panel
-        anchor.rect.x: 0
+        // Bounded and opaque: without a compositor a transparent surface turns black.
+        anchor.rect.x: Math.max(0, root.panel.width - implicitWidth - 8)
         anchor.rect.y: root.panel.height
-        implicitWidth: root.panel.width
-        implicitHeight: root.panel.screen ? Math.max(0, root.panel.screen.height - root.panel.height) : 700
+        implicitWidth: Math.max(1, viewport.width)
+        implicitHeight: Math.max(1, viewport.height)
         visible: root.opened !== ""
         grabFocus: true
-        color: "transparent"
-        MouseArea { anchors.fill: parent; onClicked: root.opened = "" }
+        color: root.background
+        onVisibleChanged: if (!visible) root.opened = ""
         Flickable {
             id: viewport
             readonly property int cardWidth: root.opened === "audio" ? 360 : 620
             readonly property int cardHeight: root.opened === "audio" ? Math.max(560, audioContent.implicitHeight + 32) : 680
-            x: Math.max(0, parent.width - width - 8)
-            width: Math.min(cardWidth, parent.width)
-            height: Math.min(cardHeight, parent.height)
+            readonly property int availableHeight: root.panel.screen ? Math.max(200, root.panel.screen.height - root.panel.height - 18) : 700
+            x: 0
+            width: Math.min(cardWidth, root.panel.width)
+            height: Math.min(cardHeight, availableHeight)
             contentWidth: cardWidth; contentHeight: cardHeight; clip: true
             boundsBehavior: Flickable.StopAtBounds
             Rectangle {
                 width: viewport.cardWidth; height: viewport.cardHeight
-                color: root.background; border.width: 1; border.color: root.accent; radius: 8
+                color: root.background; border.width: 1; border.color: root.accent; radius: 0
                 focus: true
                 Keys.onEscapePressed: { if (root.selectedWifi) root.selectedWifi = null; else root.opened = ""; }
                 MouseArea { anchors.fill: parent }
@@ -267,14 +269,14 @@ Row {
                         Rectangle {
                             required property var modelData
                             Layout.fillWidth: true; Layout.preferredHeight: 34; radius: 6
-                            color: modelData.name === root.defaultOutput ? root.surface : root.background
-                            border.width: 1; border.color: modelData.name === root.defaultOutput ? root.accent : root.surface
+                            color: outputMouse.containsMouse ? "#4C566A" : root.surface
+                            border.width: 1; border.color: modelData.name === root.defaultOutput || outputMouse.containsMouse ? root.accent : "#3B4252"
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
                                 Label { text: modelData.description; font.bold: modelData.name === root.defaultOutput }
                                 Label { Layout.fillWidth: false; text: modelData.name === root.defaultOutput ? "Standard" : "Wählen"; color: root.accent; font.pixelSize: 12 }
                             }
-                            MouseArea { anchors.fill: parent; enabled: !root.busy; cursorShape: Qt.PointingHandCursor; onClicked: root.detailsAction("output", [modelData.name]) }
+                            MouseArea { id: outputMouse; anchors.fill: parent; hoverEnabled: true; enabled: !root.busy; cursorShape: Qt.PointingHandCursor; onClicked: root.detailsAction("output", [modelData.name]) }
                         }
                     }
                     RowLayout { Layout.fillWidth: true; Section { text: "Mikrofon" } Label { Layout.fillWidth: false; text: root.micState } ActionButton { text: root.micState === "Stumm" ? "Ton an" : "Stumm"; enabled: root.micState !== "Nicht verfügbar"; onClicked: root.detailsAction("mic-mute") } }

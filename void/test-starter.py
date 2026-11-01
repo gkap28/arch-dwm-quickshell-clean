@@ -1,4 +1,4 @@
-"""Safety tests and actual X11 hotkey test. Requires build/X11 dependencies.
+"""Safety tests and actual X11 hotkey test. Use the documented nix-shell below.
 The installer OS gate is changed ONLY in an isolated test copy; host files untouched.
 """
 import os, pathlib, shutil, subprocess, tempfile, time, unittest
@@ -43,7 +43,7 @@ class StarterTests(unittest.TestCase):
         self.assertEqual((self.home/'.xinitrc').read_text(),'keep')
         self.assertEqual((self.home/'.config/quickshell/shell.qml').read_text(),'keep')
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.repo.iterdir() if p.is_file()})
-        self.assertEqual(sorted(p.name for p in data.iterdir()),['config','dwm','monitors.sh','power-action.sh','power-menu','status.sh','wallpaper.sh','xinitrc'])
+        self.assertEqual(sorted(p.name for p in data.iterdir()),['bar-bridge','config','control-action.sh','dwm','module-details.sh','modules.sh','monitors.sh','power-action.sh','power-menu','quickshell','session.sh','status.sh','updates.sh','wallpaper.sh','xinitrc'])
     def test_symlink_destination_refused(self):
         (self.home/'.local/share').mkdir(parents=True)
         outside=self.base/'outside';outside.mkdir()
@@ -52,6 +52,7 @@ class StarterTests(unittest.TestCase):
         self.assertEqual(list(outside.iterdir()),[])
     def test_independent_nine_workspaces_and_status_on_two_monitors(self):
         result=self.install();self.assertEqual(result.returncode,0,result.stderr)
+        # Xvfb has no physical outputs: substitute ONLY the Xinerama geometry.
         shim=self.base/'screens.c'
         shim.write_text('''#include <stdlib.h>
 #include <X11/Xlib.h>
@@ -64,7 +65,8 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
 }
 ''')
         library=self.base/'screens.so'
-        subprocess.run(['cc','-shared','-fPIC',str(shim),'-o',str(library)],check=True)
+        flags=subprocess.run(['pkg-config','--cflags','x11','xinerama'],capture_output=True,text=True,check=True).stdout.split()
+        subprocess.run(['cc','-shared','-fPIC',*flags,str(shim),'-o',str(library)],check=True)
         env={**self.env,'DISPLAY':':196'}
         log=open(self.base/'dual.log','w')
         server=subprocess.Popen(['Xvfb',':196','-screen','0','4480x1080x24','-nolisten','tcp'],stdout=log,stderr=log)
@@ -78,8 +80,14 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 if subprocess.run(['xprop','-root'],env=env,capture_output=True).returncode==0:break
                 time.sleep(.05)
             wm=subprocess.Popen([str(self.home/'.local/share/dwm-void/dwm')],env={**env,'LD_PRELOAD':str(library)},stdout=log,stderr=log)
-            time.sleep(.6)
-            bars=command('xdotool','search','--onlyvisible','--class','^dwm$').split()
+            bars=[]
+            for _ in range(100):
+                found=subprocess.run(['xdotool','search','--onlyvisible','--class','^dwm$'],env=env,capture_output=True,text=True)
+                if found.returncode==0:
+                    bars=found.stdout.split()
+                    if len(bars)==2:break
+                time.sleep(.1)
+            self.assertIsNone(wm.poll(),(self.base/'dual.log').read_text())
             self.assertEqual(len(bars),2)
             self.assertEqual(sorted(int(geometry(b)['WIDTH']) for b in bars),[1920,2560])
             for label,pos in [('LeftTest','100'),('RightTest','3000')]:
@@ -89,14 +97,17 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
             left=command('xdotool','search','--class','LeftTest').split()[0]
             right=command('xdotool','search','--class','RightTest').split()[0]
             for origin,win,other,otherx in [(0,left,right,2560),(2560,right,left,0)]:
-                command('xdotool','mousemove',str(origin+38),'8');command('xdotool','click','1');time.sleep(.2)
+                bh=int(geometry(bars[0])['HEIGHT'])
+                command('xdotool','mousemove',str(origin+bh+38),'8');command('xdotool','click','1');time.sleep(.2)
                 self.assertLess(int(geometry(win)['X']),0)
                 self.assertEqual(int(geometry(other)['X']),otherx)
-                command('xdotool','mousemove',str(origin+12),'8');command('xdotool','click','1');time.sleep(.2)
+                command('xdotool','mousemove',str(origin+bh+12),'8');command('xdotool','click','1');time.sleep(.2)
                 self.assertEqual(int(geometry(win)['X']),origin)
+            # Replace the action helper only in this test home: never execute power actions.
             helper=self.home/'.local/share/dwm-void/power-action.sh'
             helper.write_text('#!/bin/sh\nprintf "%s" "$1" > "$HOME/power-invocation"\n')
-            command('xdotool','mousemove','4470','8');command('xdotool','click','1');time.sleep(.3)
+            command('xdotool','mousemove','4470','8');command('xdotool','mousedown','1');time.sleep(.5)
+            command('xdotool','mouseup','1');time.sleep(.3)
             menu=command('xdotool','search','--name','^Void Power$').split()[0]
             command('xdotool','mousemove','--window',menu,'30','67');command('xdotool','click','1');time.sleep(.2)
             self.assertFalse((self.home/'power-invocation').exists())
@@ -109,6 +120,17 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
             command('xdotool','mousemove','--window',menu,'30','67');command('xdotool','click','1');time.sleep(.2)
             command('xdotool','mousemove','--window',menu,'30','151');command('xdotool','click','1');time.sleep(.3)
             self.assertEqual((self.home/'power-invocation').read_text(),'reboot')
+            centerhelper=self.home/'.local/share/dwm-void/control-action.sh'
+            centerhelper.write_text('#!/bin/sh\nprintf "%s" "$1" > "$HOME/control-invocation"\n')
+            for origin in [0,2560]:
+                command('xdotool','mousemove',str(origin+8),'8');command('xdotool','mousedown','1');time.sleep(.5)
+                command('xdotool','mouseup','1');time.sleep(.3)
+                center=command('xdotool','search','--name','^Void Control$').split()[0]
+                self.assertEqual(int(geometry(center)['X']),origin+10)
+                capture=os.environ.get('VOID_TEST_CONTROL_CAPTURE')
+                if capture:command('import','-window',center,f'{capture}-{origin}.png')
+                command('xdotool','mousemove','--window',center,'30','151');command('xdotool','click','1');time.sleep(.3)
+                self.assertEqual((self.home/'control-invocation').read_text(),'hotkeys')
             for tag in range(2,10):
                 command('xdotool','mousemove','3000','300');command('xdotool','key',f'super+{tag}');time.sleep(.1)
                 self.assertEqual(int(geometry(left)['X']),0)
@@ -120,6 +142,7 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 self.assertLess(int(geometry(left)['X']),0)
                 self.assertEqual(int(geometry(right)['X']),2560)
                 command('xdotool','key','super+1');time.sleep(.1)
+            # Both bar images must change when status changes without focus changes.
             command('xsetroot','-name','');time.sleep(.15)
             for i,b in enumerate(bars):command('import','-window',b,str(self.base/f'before{i}.png'))
             command('xsetroot','-name','31.10.2026 17:46');time.sleep(.2)
@@ -134,7 +157,10 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 if terminal.poll() is None:terminal.terminate();terminal.wait(timeout=5)
             if wm and wm.poll() is None:wm.terminate();wm.wait(timeout=5)
             server.terminate();server.wait(timeout=5);log.close()
+
     def test_super_x_launches_alacritty_and_quit_exits(self):
+        # Alacritty needs GL unavailable in this sandbox. A named test terminal
+        # records the actual alacritty invocation and shows a real X11 window.
         result=self.install();self.assertEqual(result.returncode,0,result.stderr)
         terminal=self.bin/'alacritty'
         terminal.write_text('#!/bin/sh\nprintf alacritty > "$HOME/terminal-invocation"\nexec xterm -class Alacritty\n')
@@ -155,6 +181,8 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
                 time.sleep(.05)
             wm=subprocess.Popen([str(self.home/'.local/share/dwm-void/dwm')],env=env,stdout=log,stderr=log)
             for _ in range(100):
+                if b'dwm' in subprocess.run(['xprop','-root','_NET_SUPPORTING_WM_CHECK'],env=env,capture_output=True).stdout: break
+                # wait by property type; root ID doesn't contain 'dwm'
                 if b'window id' in subprocess.run(['xprop','-root','_NET_SUPPORTING_WM_CHECK'],env=env,capture_output=True).stdout:break
                 time.sleep(.05)
             self.assertIsNone(wm.poll())
@@ -189,7 +217,7 @@ XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
             subprocess.run(['xdotool','key','super+shift+q'],env=env,check=True)
             wm.wait(timeout=10);self.assertEqual(wm.returncode,0)
             self.assertFalse((self.home/'unwanted-autostart').exists())
-            print('Verified: native bar, status, Alacritty invocation with Xterm substitute, quit, no upstream hooks. Real Void hardware still unverified.')
+            print('Verified: native bar visible at top with positive height; status update; Super+X invokes alacritty command; Xterm substitute visible and tiled; quit; no upstream hooks. Real Void hardware still unverified.')
         finally:
             if wm and wm.poll() is None:wm.terminate();wm.wait(timeout=10)
             subprocess.run(['pkill','-f',str(self.home)],capture_output=True)

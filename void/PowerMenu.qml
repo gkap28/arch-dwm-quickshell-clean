@@ -15,6 +15,9 @@ Item {
     required property string foreground
     required property string surface
     required property string accent
+    property string hover: "#4C566A"
+    property string strong: "#ECEFF4"
+    property string controlBorder: "#3B4252"
     width: 28
     height: 28
     // "" = closed, "menu" = action list, otherwise the id being confirmed.
@@ -66,6 +69,12 @@ Item {
         running: true
         stdout: SplitParser { onRead: data => { const t = data.trim(); if (t !== "") root.suspendAvailable = t === "yes"; } }
     }
+    Rectangle {
+        anchors.centerIn: parent; width: 26; height: 26; radius: 6
+        color: root.opened !== "" ? root.surface : powerMouse.containsMouse ? root.hover : "transparent"
+        border.width: 1
+        border.color: root.opened !== "" || powerMouse.containsMouse ? root.accent : "transparent"
+    }
     Canvas {
         anchors.centerIn: parent
         width: 15; height: 15
@@ -90,10 +99,10 @@ Item {
         anchor.rect.x: Math.max(0, root.panel.width - implicitWidth - 8)
         anchor.rect.y: root.panel.height
         implicitWidth: 276
-        implicitHeight: cardColumn.implicitHeight + 20
+        implicitHeight: cardColumn.implicitHeight + 36
         visible: root.opened !== ""
         grabFocus: true
-        onVisibleChanged: if (visible) card.forceActiveFocus()
+        onVisibleChanged: { if (visible) card.forceActiveFocus(); else root.opened = ""; }
         color: root.background
         MouseArea { anchors.fill: parent; onClicked: root.opened = "" }
         Rectangle {
@@ -101,7 +110,7 @@ Item {
             readonly property int cardWidth: 276
             x: 0
             width: cardWidth
-            height: cardColumn.implicitHeight + 20
+            height: cardColumn.implicitHeight + 36
             color: root.background
             border.width: 1
             border.color: root.accent
@@ -114,29 +123,29 @@ Item {
             MouseArea { anchors.fill: parent }
             ColumnLayout {
                 id: cardColumn
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
                 spacing: 4
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 26
                     Text {
                         visible: root.selectedAction !== null
-                        text: "‹ Zurück"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 14
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "menu" }
+                        text: "< Zurück"
+                        color: backMouse.containsMouse ? root.accent : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        MouseArea { id: backMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "menu" }
                     }
                     Text {
                         Layout.fillWidth: true
                         text: root.selectedAction ? root.selectedAction.label : "Power"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                        color: root.foreground; font.family: "monospace"; font.pixelSize: 13; font.letterSpacing: root.selectedAction ? 1 : 2
                     }
                     Text {
-                        text: "×"
-                        color: root.foreground; font.family: "monospace"; font.pixelSize: 18
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "" }
+                        text: "x"
+                        color: closeMouse.containsMouse ? root.accent : root.foreground; font.family: "monospace"; font.pixelSize: 13
+                        MouseArea { id: closeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.opened = "" }
                     }
                 }
-                Rectangle { Layout.fillWidth: true; height: 1; color: root.surface }
+                Rectangle { Layout.fillWidth: true; Layout.topMargin: 2; Layout.bottomMargin: 2; height: 1; color: root.accent; opacity: 0.55 }
                 Text {
                     Layout.fillWidth: true
                     visible: root.message !== ""
@@ -153,23 +162,23 @@ Item {
                         Rectangle {
                             required property var modelData
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 36
+                            Layout.preferredHeight: 28
                             radius: 6
-                            color: rowMouse.containsMouse ? root.surface : root.background
+                            color: rowMouse.containsMouse ? root.hover : "transparent"
                             border.width: 0
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
+                                anchors.leftMargin: 9
+                                anchors.rightMargin: 9
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.label
-                                    color: root.foreground; font.family: "monospace"; font.pixelSize: 14
+                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: "monospace"; font.pixelSize: 13
                                 }
                                 Text {
                                     visible: modelData.confirm
-                                    text: "›"
-                                    color: root.accent; font.family: "monospace"; font.pixelSize: 14
+                                    text: ">"
+                                    color: rowMouse.containsMouse ? root.strong : root.foreground; font.family: "monospace"; font.pixelSize: 13
                                 }
                             }
                             MouseArea {
@@ -205,24 +214,24 @@ Item {
                         Button {
                             id: cancelButton
                             Layout.fillWidth: true
-                            implicitHeight: 34
+                            implicitHeight: 30
                             enabled: !root.busy
                             font.family: "monospace"; font.pixelSize: 13
                             text: "Abbrechen"
                             onClicked: root.opened = "menu"
                             contentItem: Text { text: cancelButton.text; color: root.foreground; font: cancelButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                            background: Rectangle { radius: 6; color: cancelButton.hovered ? root.surface : root.background; border.width: 1; border.color: root.surface }
+                            background: Rectangle { radius: 6; color: cancelButton.hovered ? root.hover : root.surface; border.width: 1; border.color: cancelButton.hovered ? root.accent : root.controlBorder }
                         }
                         Button {
                             id: confirmButton
                             Layout.fillWidth: true
-                            implicitHeight: 34
+                            implicitHeight: 30
                             enabled: !root.busy
                             font.family: "monospace"; font.pixelSize: 13
                             text: root.busy ? "Läuft …" : "Bestätigen"
                             onClicked: { const a = root.actionFor(root.opened); if (a) root.run(a); }
                             contentItem: Text { text: confirmButton.text; color: root.foreground; font: confirmButton.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; opacity: confirmButton.enabled ? 1 : 0.45 }
-                            background: Rectangle { radius: 6; color: confirmButton.hovered ? root.surface : root.background; border.width: 1; border.color: root.accent }
+                            background: Rectangle { radius: 6; color: confirmButton.hovered ? root.hover : root.surface; border.width: 1; border.color: confirmButton.hovered ? root.accent : root.controlBorder }
                         }
                     }
                 }

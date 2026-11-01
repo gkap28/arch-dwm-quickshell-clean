@@ -109,8 +109,8 @@ ShellRoot {
                                 required property var modelData
                                 readonly property bool selected: root.category === modelData.id
                                 width: categoryText.implicitWidth + 22; height: 28; radius: 6
-                                color: selected || categoryMouse.containsMouse ? root.surface : root.background
-                                border.width: 1; border.color: selected ? root.accent : root.surface
+                                color: selected ? root.surface : categoryMouse.containsMouse ? "#4C566A" : root.surface
+                                border.width: 1; border.color: selected || categoryMouse.containsMouse ? root.accent : "#3B4252"
                                 Text { id: categoryText; anchors.centerIn: parent; text: modelData.label + " " + root.applications.filter(e => root.matches(e, modelData.id)).length; color: root.foreground; font.family: "monospace"; font.pixelSize: 12 }
                                 MouseArea { id: categoryMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.category = modelData.id; root.select(0); search.forceActiveFocus(); } }
                             }
@@ -129,7 +129,7 @@ ShellRoot {
                         required property int index
                         readonly property bool selected: list.currentIndex === index
                         width: list.width; height: 58; radius: 8
-                        color: selected || mouse.containsMouse ? root.surface : root.background
+                        color: selected ? root.surface : mouse.containsMouse ? "#4C566A" : root.transparent
                         border.width: 1; border.color: selected ? root.accent : root.transparent
                         RowLayout {
                             anchors.left: parent.left; anchors.right: parent.right; anchors.leftMargin: 16; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter; spacing: 16

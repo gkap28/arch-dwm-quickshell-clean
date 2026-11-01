@@ -39,7 +39,9 @@ class PanelModuleTests(unittest.TestCase):
                 time.sleep(1.5)
                 command('xdotool','mousemove','1240','14');command('xdotool','click','1');time.sleep(.6)
                 tree=command('xwininfo','-root','-tree')
-                popups=re.findall(r'(0x[0-9a-f]+) "quickshell": .*?1280x772\+',tree)
+                # Bounded opaque card at the right edge, below the 28px bar (no full-screen surface).
+                popups=re.findall(r'(0x[0-9a-f]+) "quickshell": .*?360x\d+\+912\+28 ',tree)
+                self.assertNotIn('1280x772+',tree)
                 self.assertTrue(popups,(home/'log').read_text())
                 pathlib.Path('/tmp/void-popup-check').mkdir(exist_ok=True)
                 command('magick','import','-window','root','/tmp/void-popup-check/audio.png')
@@ -56,7 +58,7 @@ class PanelModuleTests(unittest.TestCase):
                 command('xdotool','mousemove','970','670');command('xdotool','click','1');time.sleep(.5)
                 self.assertEqual((home/'nm-connection-editor-opened').read_text().strip(),'opened')
                 command('xdotool','key','Escape');time.sleep(.2)
-                self.assertNotIn('1280x772+',command('xwininfo','-root','-tree'))
+                self.assertNotRegex(command('xwininfo','-root','-tree'),r'(360|620)x\d+\+\d+\+28 ')
                 self.assertIsNone(panel.poll())
             finally:
                 for process in [panel,server]:

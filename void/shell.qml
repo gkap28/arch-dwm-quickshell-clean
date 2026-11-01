@@ -11,6 +11,8 @@ ShellRoot {
         Quickshell.screens.map(s => s.name + "@" + s.x + "," + s.y + " " + s.width + "x" + s.height).join(" | "))
     property var monitors: []
     property string status: ""
+    // Titus Nord roles: bar #434C5E, popups #2E3440, hover #4C566A, selected #434C5E.
+    readonly property string bar: "#434C5E"
     readonly property string normal: "#2E3440"
     readonly property string active: "#434C5E"
     readonly property string foreground: "#D8DEE9"
@@ -45,7 +47,7 @@ ShellRoot {
             implicitHeight: 28
             exclusiveZone: -1
             aboveWindows: true
-            color: root.normal
+            color: root.bar
             readonly property var monitor: root.monitors.find(m => m.x === screen.x && m.y === screen.y)
             Row {
                 id: workspaces
@@ -54,7 +56,13 @@ ShellRoot {
                 Item {
                     width: 28; height: 28
                     Image { anchors.centerIn: parent; width: 22; height: 22; source: "logo.svg" }
-                    MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached([root.home + "power-menu", "--control"]) }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: control.opened = !control.opened }
+                    ControlCenter {
+                        id: control
+                        panel: panel; home: root.home
+                        background: root.normal; foreground: root.foreground; accent: root.workspaceBorder
+                        onPowerRequested: power.opened = "menu"
+                    }
                 }
                 Item {
                     width: workspaceRow.width + 8
@@ -122,6 +130,7 @@ ShellRoot {
                     surface: root.active; accent: root.workspaceBorder
                 }
                 PowerMenu {
+                    id: power
                     panel: panel; home: root.home
                     background: root.normal; foreground: root.foreground
                     surface: root.active; accent: root.workspaceBorder

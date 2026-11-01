@@ -12,6 +12,8 @@ case "${1:-}" in
     power) exec "$data/power-menu" ;;
     apps)
         export DWM_VOID_LAUNCHER_X=${2:-0} DWM_VOID_LAUNCHER_Y=${3:-0}
+        # dwm places the launcher on its focused monitor: focus the clicked one first.
+        "$data/bar-bridge" focus "$DWM_VOID_LAUNCHER_X" "$DWM_VOID_LAUNCHER_Y" 2>/dev/null || :
         exec quickshell --path "$data/quickshell/launcher.qml"
         ;;
     *) echo 'Unbekannte Aktion.' >&2; exit 1 ;;

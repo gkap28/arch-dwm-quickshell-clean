@@ -42,18 +42,19 @@ int main(int argc, char **argv) {
     }
     Visual *visual = DefaultVisual(d, screen);
     Colormap cmap = DefaultColormap(d, screen);
-    XftColor bg, text, muted, accent;
+    XftColor bg, text, muted, accent, hover;
     if (!XftColorAllocName(d, visual, cmap, "#2E3440", &bg)
         || !XftColorAllocName(d, visual, cmap, "#ECEFF4", &text)
         || !XftColorAllocName(d, visual, cmap, "#D8DEE9", &muted)
-        || !XftColorAllocName(d, visual, cmap, "#88C0D0", &accent)) return 1;
+        || !XftColorAllocName(d, visual, cmap, "#81A1C1", &accent)
+        || !XftColorAllocName(d, visual, cmap, "#4C566A", &hover)) return 1;
     XSetWindowAttributes attrs = {0};
     attrs.override_redirect = True;
     attrs.background_pixel = bg.pixel;
     attrs.border_pixel = accent.pixel;
     attrs.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | PointerMotionMask;
     Window win = XCreateWindow(d, root, control ? left + 10 : (edge > WIDTH + 10 ? edge - WIDTH - 10 : 0),
-        py + 16, WIDTH, height, 1, CopyFromParent, InputOutput, visual,
+        (py + 16 > top + 30 ? py + 16 : top + 30), WIDTH, height, 1, CopyFromParent, InputOutput, visual,
         CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask, &attrs);
     XStoreName(d, win, control ? "Void Control" : "Void Power");
     XftFont *font = XftFontOpenName(d, screen, "monospace:size=12");
@@ -71,17 +72,19 @@ int main(int argc, char **argv) {
             const char *label = control ? control_labels[i] : (confirmation < 0 ? labels[i] :
                 (i == 0 ? labels[confirmation] : (i == 1 ? "Abbrechen" : "Bestaetigen")));
             if (i == selected) {
-                XSetForeground(d, gc, accent.pixel);
-                XDrawRectangle(d, win, gc, 8, HEADER + i * ROW, WIDTH - 17, ROW - 2);
+                XSetForeground(d, gc, hover.pixel);
+                XFillRectangle(d, win, gc, 8, HEADER + i * ROW, WIDTH - 16, ROW - 2);
             }
-            XftDrawStringUtf8(draw, i == selected ? &accent : &text, font,
+            XftDrawStringUtf8(draw, &text, font,
                 16, HEADER + i * ROW + 27, (const FcChar8 *)label, strlen(label));
         }
         XFlush(d);
         XEvent ev; XNextEvent(d, &ev);
         if (ev.type == MotionNotify) {
-            selected = (ev.xmotion.y - HEADER) / ROW;
-            if (ev.xmotion.y < HEADER || selected >= rows) selected = -1;
+            /* The grab reports motion from every monitor; only the popup itself selects. */
+            int x = ev.xmotion.x, y = ev.xmotion.y;
+            selected = (y - HEADER) / ROW;
+            if (x < 0 || x >= WIDTH || y < HEADER || y >= height || selected >= rows) selected = -1;
         } else if (ev.type == KeyPress) {
             KeySym key = XLookupKeysym(&ev.xkey, 0);
             if (key == XK_Escape) done = 1;

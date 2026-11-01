@@ -39,14 +39,35 @@ class WindowIntegrationTests(starter.StarterTests):
             time.sleep(2)
             initial = bars(); self.assertEqual(len(initial),1)
             command('xsetroot','-solid','#5E81AC'); command('xsetroot','-name','01.11.2026 11:59'); time.sleep(.5)
-            click(1266,14)
+            def pixel(x,y):
+                out = command('magick','import','-window','root','-crop',f'1x1+{x}+{y}','-depth','8','txt:-')
+                return re.search(r'#([0-9A-F]{6})', out).group(1)
+            # Titus Nord: bar #434C5E, popup #2E3440, hovered row #4C566A.
+            self.assertEqual(pixel(640,2), '434C5E')
+            click(14,14)
+            tree = command('xwininfo','-root','-tree')
+            self.assertRegex(tree, r'276x\d+\+6\+28 ', 'Control center sits below the bar at Titus x=6')
+            self.assertEqual(pixel(20,200), '2E3440')
+            command('xdotool','mousemove','100','96'); time.sleep(.4)
+            command('magick','import','-window','root',str(captures/'control.png'))
+            self.assertEqual(pixel(30,96), '4C566A')
+            self.assertEqual(bars(), initial)
+            command('xdotool','key','Escape'); time.sleep(.3)
+            self.assertNotRegex(command('xwininfo','-root','-tree'), r'276x\d+\+6\+28 ')
+            # Control center "Power" opens the bar's power menu on the same screen.
+            click(14,14); click(100,125); time.sleep(.3)
+            self.assertRegex(command('xwininfo','-root','-tree'), r'276x\d+\+996\+28 ')
+            command('xdotool','mousemove','1100','99'); time.sleep(.4)
             command('magick','import','-window','root',str(captures/'power.png'))
+            self.assertEqual(pixel(1250,200), '2E3440')
+            self.assertEqual(pixel(1030,99), '4C566A')
             self.assertEqual(bars(), initial)
             command('xdotool','key','Escape'); time.sleep(.3)
             # Updates are to the right of the centered date.
             click(734,14)
             command('magick','import','-window','root',str(captures/'updates.png'))
-            self.assertIn('380x',command('xwininfo','-root','-tree'))
+            self.assertIn('480x',command('xwininfo','-root','-tree'))
+            self.assertEqual(pixel(640,40), '2E3440')
             self.assertEqual(bars(), initial)
             command('xdotool','key','Escape'); time.sleep(.3)
             processes.append(subprocess.Popen(['quickshell','--path',str(data/'quickshell/launcher.qml')],env=env,stdout=log,stderr=log))
@@ -66,11 +87,61 @@ class WindowIntegrationTests(starter.StarterTests):
             self.assertEqual(bars(), initial)
             self.assertFalse((self.home/'actions').exists())
             log.flush(); self.assertNotIn('TypeError',(self.base/'windows.log').read_text())
-            print('Installed private dwm: launcher 820x600, no fullscreen, bar unchanged; bounded power/update popups, no compositor, no system action.')
+            print('Installed private dwm: launcher 820x600, no fullscreen, bar unchanged; Titus two-colour control/power/update popups, no compositor, no system action.')
+        finally:
+            for process in reversed(processes):
+                if process.poll() is None: process.terminate(); process.wait(timeout=5)
+            log.close()
+
+    def test_launcher_opens_on_clicked_monitor(self):
+        """Control center on DisplayPort-2 (right) must open the launcher there, not on HDMI."""
+        terminal = self.bin/'alacritty'
+        terminal.write_text('#!/bin/sh\nexit 0\n'); terminal.chmod(0o755)
+        result = self.install(); self.assertEqual(result.returncode, 0, result.stderr)
+        data = self.home / '.local/share/dwm-void'
+        shim = self.base/'screens.c'
+        shim.write_text('''#include <stdlib.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/Xinerama.h>
+Bool XineramaIsActive(Display *d) { return True; }
+XineramaScreenInfo *XineramaQueryScreens(Display *d, int *n) {
+    XineramaScreenInfo *s=calloc(2,sizeof(*s)); *n=2;
+    s[0]=(XineramaScreenInfo){0,0,0,2560,1080};
+    s[1]=(XineramaScreenInfo){1,2560,0,1920,1080}; return s;
+}
+''')
+        library = self.base/'screens.so'
+        flags = subprocess.run(['pkg-config','--cflags','x11','xinerama'],capture_output=True,text=True,check=True).stdout.split()
+        subprocess.run(['cc','-shared','-fPIC',*flags,str(shim),'-o',str(library)],check=True)
+        runtime = self.base/'runtime'; runtime.mkdir(mode=0o700)
+        env = {**self.env, 'DISPLAY': ':188', 'XDG_RUNTIME_DIR': str(runtime), 'QT_QPA_PLATFORM':'xcb', 'QT_QUICK_BACKEND':'software'}
+        log = open(self.base/'monitor.log', 'w'); processes = []
+        def command(*args): return subprocess.run(args, env=env, text=True, capture_output=True, check=True).stdout
+        try:
+            processes.append(subprocess.Popen(['Xvfb',':188','-screen','0','4480x1080x24','-nolisten','tcp'], env=env, stdout=log, stderr=log))
+            for _ in range(100):
+                if subprocess.run(['xprop','-root'],env=env,capture_output=True).returncode == 0: break
+                time.sleep(.05)
+            command('xdotool','mousemove','100','500')  # pointer and focus start on HDMI
+            processes.append(subprocess.Popen([str(data/'dwm')],env={**env,'LD_PRELOAD':str(library)},stdout=log,stderr=log))
+            time.sleep(.5)
+            for x, expected in [(2560, 2560 + (1920-820)//2), (0, (2560-820)//2)]:
+                launcher = subprocess.Popen(['sh',str(data/'control-action.sh'),'apps',str(x),'0'],env=env,stdout=log,stderr=log)
+                window = None
+                for _ in range(60):
+                    found = subprocess.run(['xdotool','search','--onlyvisible','--name','^Void Applications$'],env=env,capture_output=True,text=True).stdout.split()
+                    if found: window = found[0]; break
+                    time.sleep(.1)
+                self.assertIsNotNone(window, (self.base/'monitor.log').read_text())
+                time.sleep(.4)
+                geometry = dict(line.split('=',1) for line in command('xdotool','getwindowgeometry','--shell',window).splitlines() if '=' in line)
+                self.assertEqual(int(geometry['X']), expected, f'launcher from monitor x={x}')
+                command('xdotool','key','--window',window,'Escape'); launcher.terminate(); launcher.wait(timeout=5); time.sleep(.3)
+            print('Launcher from DisplayPort-2 opens centred on DisplayPort-2; from HDMI on HDMI.')
         finally:
             for process in reversed(processes):
                 if process.poll() is None: process.terminate(); process.wait(timeout=5)
             log.close()
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='WindowIntegrationTests.test_launcher_stays_windowed_and_panels_survive')
+    unittest.main(defaultTest=['WindowIntegrationTests.test_launcher_stays_windowed_and_panels_survive','WindowIntegrationTests.test_launcher_opens_on_clicked_monitor'])

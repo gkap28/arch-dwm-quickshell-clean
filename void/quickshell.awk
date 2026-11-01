@@ -7,7 +7,7 @@ section == "isalt" && /Atom wtype;/ { print; print "\tif (wa && (wa->width <= wa
 /^manage\(Window w, XWindowAttributes \*wa\)$/ { section = "client" }
 section == "client" && /term = termforwin\(c\);/ {
     print "\t\tif (!strcmp(c->name, \"Void Applications\")) {"
-    print "\t\t\tc->mon = recttomon(wa->x, wa->y, wa->width, wa->height);"
+    print "\t\t\tc->mon = selmon; /* control-action.sh focused the clicked monitor first. */"
     print "\t\t\tc->tags = c->mon->tagset[c->mon->seltags]; c->isfloating = 1;"
     print "\t\t}"
 }
@@ -54,6 +54,11 @@ section == "bar" && /int x, w, tw = 0;/ {
     print "\t}"
 }
 section == "message" && /if \(cme->message_type == netatom\[NetCurrentDesktop\]\)/ {
+    print "\tif (cme->message_type == XInternAtom(dpy, \"_DWM_VOID_FOCUS\", False) && cme->format == 32) {"
+    print "\t\tfor (Monitor *m = mons; m; m = m->next)"
+    print "\t\t\tif (m->mx == cme->data.l[0] && m->my == cme->data.l[1] && selmon != m) { unfocus(selmon->sel, 0); selmon = m; focus(NULL); }"
+    print "\t\treturn;"
+    print "\t}"
     print "\tif (cme->message_type == XInternAtom(dpy, \"_DWM_VOID_VIEW\", False) && cme->format == 32) {"
     print "\t\tlong tag = cme->data.l[0], x = cme->data.l[1], y = cme->data.l[2];"
     print "\t\tif (tag < 0 || tag >= 9) return;"

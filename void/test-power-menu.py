@@ -46,15 +46,16 @@ background: "#2E3440"; foreground: "#D8DEE9"; surface: "#434C5E"; accent: "#81A1
                 expected=[]
                 # Positions are inside the five actual visible QML action rows.
                 for index,action in enumerate(['reboot','logout','lock','suspend','shutdown']):
-                    click(1266,14); click(1080,91+38*index)
+                    click(1266,14); click(1080,99+30*index)
                     if action != 'lock':
                         self.assertEqual(recorded(),expected,'Selection must not execute '+action)
                         command('magick','import','-window','root',str(capture/(action+'-confirmation.png')))
                         # Escape returns to the list without executing anything.
                         command('xdotool','key','Escape'); time.sleep(.2)
                         self.assertEqual(recorded(),expected)
-                        click(1080,91+38*index)
-                        click(1200,176 if action == 'suspend' else 152)
+                        click(1080,99+30*index)
+                        height=int(re.search(r'276x(\d+)\+996\+28 ',command('xwininfo','-root','-tree')).group(1))
+                        click(1193,28+height-33)  # "Bestätigen", bottom-right of the Titus card
                     expected.append(action)
                     self.assertEqual(recorded(),expected)
                     command('xdotool','key','Escape'); command('xdotool','key','Escape'); time.sleep(.2)
