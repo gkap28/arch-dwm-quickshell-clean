@@ -4,7 +4,7 @@ set -u
 . "$HOME/.local/share/dwm-void/clock-format.sh"
 while :; do
     seconds=$(sh "$HOME/.local/share/dwm-void/center-settings.sh" read 2>/dev/null | sed -n 's/^seconds=//p')
-    if [ "$seconds" = 1 ]; then set -- $(date '+%w %d %m %H.%M.%S'); else set -- $(date '+%w %d %m %H.%M'); fi
+    if [ "$seconds" = 1 ]; then set -- $(date '+%w %d %m %H:%M:%S'); else set -- $(date '+%w %d %m %H.%M'); fi
     zeit=$(clock_text "$@")
     wlan=''
     for w in /sys/class/net/*; do

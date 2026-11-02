@@ -77,7 +77,7 @@ Item {
     }
     Canvas {
         anchors.centerIn: parent
-        width: 15; height: 15
+        width: 20; height: 20
         onPaint: {
             const c = getContext("2d"); c.reset();
             c.scale(width / 28, height / 28);
