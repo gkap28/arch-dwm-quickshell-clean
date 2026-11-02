@@ -8,8 +8,8 @@ command -v feh >/dev/null 2>&1 || {
 folder=$HOME/Pictures/backgrounds
 # feh follows Xinerama's monitor order, not the left-to-right position.
 # Resolve output names against each reported geometry before applying both images.
-hdmi=$folder/nord2560.png
-dp=$folder/arch-dwm-avatar.png
+hdmi=$folder/dwm-titus.jpg
+dp=$folder/dwm-titus.jpg
 if [ -r "$hdmi" ] && [ -r "$dp" ] && command -v xrandr >/dev/null 2>&1 && command -v xdpyinfo >/dev/null 2>&1; then
     outputs=$(xrandr --query 2>/dev/null)
     heads=$(xdpyinfo -ext XINERAMA 2>/dev/null | awk '/head #[0-9]+:/ {print $3 "@" $5}')
