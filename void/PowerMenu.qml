@@ -48,6 +48,7 @@ Item {
         run(a);
     }
     function run(a) {
+        opened = "";
         if (busy) return;
         busy = true;
         message = "";
