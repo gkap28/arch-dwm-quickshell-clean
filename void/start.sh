@@ -120,7 +120,7 @@ HOTKEYS
 ) ;;
             themes.toml) (set -C; cat > "$target" <<'THEME'
 [appearance]
-borderpx = 2
+borderpx = 1
 [colors]
 normbordercolor = "#3B4252"
 normbgcolor = "#2E3440"
