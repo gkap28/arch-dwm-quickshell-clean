@@ -8,7 +8,7 @@ done
 case "${1:-}" in
     reload-quickshell)
         [ -f "$data/quickshell/shell.qml" ] && [ ! -L "$data/quickshell/shell.qml" ] || exit 1
-        touch "$data/quickshell/shell.qml"
+        pkill -x quickshell; sleep 1; quickshell --path "$data/quickshell/shell.qml" >/dev/null 2>&1 &
         echo 'Neuladen der Void-Leiste angefordert.'; exit ;;
     reload-dwm) "$data/bar-bridge" reload; echo 'Neuladen der dwm-Einstellungen angefordert.'; exit ;;
     displays) exec arandr ;;
