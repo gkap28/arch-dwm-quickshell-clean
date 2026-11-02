@@ -125,7 +125,7 @@ borderpx = 1
 normbordercolor = "#3B4252"
 normbgcolor = "#2E3440"
 normfgcolor = "#D8DEE9"
-selbordercolor = "#88C0D0"
+selbordercolor = "#81A1C1"
 selbgcolor = "#434C5E"
 selfgcolor = "#ECEFF4"
 THEME
