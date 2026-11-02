@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
             Window r, child; int rx, ry, wx, wy; unsigned int mask;
             if (XQueryPointer(d, root, &r, &child, &rx, &ry, &wx, &wy, &mask)) {
                 int pressed = (mask & (Button1Mask | Button2Mask | Button3Mask)) != 0;
-                if (pressed && !was_pressed && child == None &&
+                if (pressed && !was_pressed &&
                     (rx < x || ry < y || rx >= x + width || ry >= y + height)) outside = 1;
                 was_pressed = pressed;
             }
