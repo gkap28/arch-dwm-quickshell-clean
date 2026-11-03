@@ -65,7 +65,7 @@ Item {
                 spacing: 2
                 RowLayout {
                     Layout.fillWidth: true; Layout.preferredHeight: 28
-                    CenterRow { visible: root.page !== ""; text: "‹"; implicitWidth: 28; onClicked: { root.page = ""; root.message = ""; } }
+                    CenterRow { visible: root.page !== ""; text: "‹ back"; onClicked: { root.page = ""; root.message = ""; } }
                     Text { Layout.fillWidth: true; text: root.page || "Kontrollzentrum"; color: root.foreground; font.family: Typography.family; font.pixelSize: 13 }
                     CenterRow { text: "×"; implicitWidth: 28; onClicked: root.opened = false }
                 }
@@ -86,9 +86,7 @@ Item {
                 ColumnLayout {
                     visible: root.page === "Quick Actions"; Layout.fillWidth: true; spacing: 2
                     CenterRow { Layout.fillWidth: true; text: "Reload Quickshell"; enabled: !operation.running; onClicked: root.reload("reload-quickshell") }
-                    Separator {}
                     CenterRow { Layout.fillWidth: true; text: "Reload dwm"; enabled: !operation.running; onClicked: root.reload("reload-dwm") }
-                    Separator {}
                 }
                 ColumnLayout {
                     visible: root.page === "Quick Widgets"; Layout.fillWidth: true; spacing: 2
