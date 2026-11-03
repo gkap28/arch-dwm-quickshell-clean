@@ -10,6 +10,7 @@ case "${1:-}" in
         [ -f "$data/quickshell/shell.qml" ] && [ ! -L "$data/quickshell/shell.qml" ] || exit 1
         pkill -x quickshell; sleep 1; quickshell --path "$data/quickshell/shell.qml" >/dev/null 2>&1 &
         echo 'Neuladen der Void-Leiste angefordert.'; exit ;;
+    restart-picom) pkill -x picom; sleep 1; picom >/dev/null 2>&1 & echo 'Picom neu gestartet.'; exit ;;
     reload-dwm) "$data/bar-bridge" reload; echo 'Neuladen der dwm-Einstellungen angefordert.'; exit ;;
     displays) exec arandr ;;
     input) exec alacritty -e sh -c 'setxkbmap -query; xinput list; printf "\nEnter zum Schließen\n"; read answer' ;;
