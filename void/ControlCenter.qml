@@ -13,9 +13,12 @@ Item {
     property bool opened: false
     property string page: ""
     property string message: ""
+    property int dpmsCurrent: 0
+    Process { id: dpmsReader; command: ["sh", root.home + "power-dpms.sh", "status"]; stdout: StdioCollector { onStreamFinished: { const s = text.trim().split(" "); root.dpmsCurrent = Number(s[1] || 0); } } }
     signal powerRequested()
     width: 0; height: 0
     onOpenedChanged: { page = ""; message = ""; }
+    onPageChanged: if (page === "Power Settings") dpmsReader.running = true;
     function run(action) {
         root.opened = false;
         Quickshell.execDetached(["sh", home + "control-action.sh", action, panel.screen.x.toString(), panel.screen.y.toString()]);
@@ -105,10 +108,17 @@ Item {
                     }
                     Separator {}
                 }
-                Text {
-                    visible: root.page === "Power Settings" || root.page === "Settings"
-                    Layout.fillWidth: true; text: "Noch nicht eingerichtet"; color: root.foreground
-                    font.family: Typography.family; font.pixelSize: 13; wrapMode: Text.WordWrap
+                ColumnLayout {
+                    visible: root.page === "Power Settings"; Layout.fillWidth: true; spacing: 2
+                    Repeater {
+                        model: [{label:"5m",sec:300},{label:"10m",sec:600},{label:"15m",sec:900},{label:"30m",sec:1800},{label:"1h",sec:3600}]
+                        CenterRow {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            text: modelData.label + (root.dpmsCurrent === modelData.sec ? " / Active" : "")
+                            onClicked: { root.reload("dpms-" + modelData.sec); root.dpmsCurrent = modelData.sec; }
+                        }
+                    }
                 }
                 Text {
                     visible: text !== ""; Layout.fillWidth: true

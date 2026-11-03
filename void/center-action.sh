@@ -12,6 +12,7 @@ case "${1:-}" in
         echo 'Neuladen der Void-Leiste angefordert.'; exit ;;
     restart-picom) pkill -x picom; sleep 1; picom >/dev/null 2>&1 & echo 'Picom neu gestartet.'; exit ;;
     restart-networkmanager) exec alacritty -e sh -c 'sudo sv restart NetworkManager; echo; echo Enter zum Schliessen; read answer' ;;
+    dpms-*) sh "$data/power-dpms.sh" set "${1#dpms-}"; echo "Bildschirm-Timeout gesetzt."; exit ;;
     reload-dwm) "$data/bar-bridge" reload; echo 'Neuladen der dwm-Einstellungen angefordert.'; exit ;;
     displays) exec arandr ;;
     input) exec alacritty -e sh -c 'setxkbmap -query; xinput list; printf "\nEnter zum Schließen\n"; read answer' ;;
