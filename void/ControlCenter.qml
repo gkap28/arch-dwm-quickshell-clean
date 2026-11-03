@@ -81,7 +81,7 @@ Item {
                     Separator {}
                     CenterRow { Layout.fillWidth: true; text: "Settings"; onClicked: root.page = text }
                     CenterRow { Layout.fillWidth: true; text: "System Info"; onClicked: root.run("system-info") }
-                    CenterRow { Layout.fillWidth: true; text: "Keybinds"; navigates: true; onClicked: { root.page = text; root.reload("list-keybinds") } }
+                    CenterRow { Layout.fillWidth: true; text: "Keybinds"; onClicked: root.run("keybinds") }
                     Separator {}
                 }
                 ColumnLayout {
@@ -104,18 +104,6 @@ Item {
                         }
                     }
                     Separator {}
-                }
-                ColumnLayout {
-                    visible: root.page === "Keybinds"; Layout.fillWidth: true; spacing: 2
-                    Repeater {
-                        model: root.message ? root.message.split("\n") : []
-                        RowLayout {
-                            required property string modelData
-                            Layout.fillWidth: true
-                            Text { Layout.preferredWidth: 150; text: modelData.split("|")[0]; color: root.accent; font.family: Typography.family; font.pixelSize: 12 }
-                            Text { Layout.fillWidth: true; text: modelData.split("|")[1] || ""; color: root.foreground; font.family: Typography.family; font.pixelSize: 12; elide: Text.ElideRight }
-                        }
-                    }
                 }
                 Text {
                     visible: root.page === "Power Settings" || root.page === "Settings"
