@@ -27,6 +27,28 @@ ShellRoot {
     property int countdown: 0
     property string message: ""
 
+    // Automatic layouts after Titus: one saved layout for "undocked" (one screen) and one for "docked" (several screens).
+    property var profiles: ({})
+    property var draft: null
+    readonly property string dockState: outputs.filter(o => o.connected !== false).length > 1 ? "docked" : "undocked"
+    function dockLabel(state) { return state === "docked" ? "Docked - external monitors" : "Undocked - built-in only"; }
+    function profileSaved(state) { return !!profiles[state] && JSON.stringify(profiles[state]) === JSON.stringify(specs(baseline)); }
+    function createDraft() { draft = clone(outputs); message = "Entwurf aus aktueller Anordnung erstellt."; }
+    function saveDraft(state) {
+        if (!draft) return;
+        const next = clone(profiles); next[state] = specs(draft); profiles = next;
+        profileFile.setText(JSON.stringify(profiles, null, 1));
+        if (state === dockState) runAction(["save"].concat(specs(draft)));
+        message = "Gespeichert als " + (state === "docked" ? "docked" : "undocked") + ".";
+        draft = null;
+    }
+    function removeProfile(state) { const next = clone(profiles); delete next[state]; profiles = next; profileFile.setText(JSON.stringify(profiles, null, 1)); }
+    FileView {
+        id: profileFile
+        path: root.home + "config/display-profiles.json"
+        onLoaded: { try { root.profiles = JSON.parse(text()) || {}; } catch (e) { root.profiles = {}; } }
+        onLoadFailed: root.profiles = {}
+    }
     function clone(list) { return JSON.parse(JSON.stringify(list)); }
     function specs(list) {
         return list.map(o => o.enabled
@@ -178,7 +200,6 @@ ShellRoot {
                             }
                         }
                         Item { Layout.fillHeight: true }
-                        Button2 { Layout.fillWidth: true; label: "Close"; onActivated: Qt.quit() }
                     }
                 }
                 Rectangle { Layout.fillHeight: true; width: 1; color: CenterTheme.mutedBorder }
@@ -192,7 +213,9 @@ ShellRoot {
                             Text { text: root.sections.find(s => s.id === root.section).label; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 18; font.bold: true }
                             Text { text: root.sections.find(s => s.id === root.section).description; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12 }
                         }
-                        Button2 { label: "×"; implicitWidth: 34; onActivated: Qt.quit() }
+                        Text { text: root.loading ? "Loading" : action.running ? "Working" : "Ready"; color: root.loading || action.running ? CenterTheme.warning : CenterTheme.success; font.family: Typography.family; font.pixelSize: 12; font.bold: true; Layout.rightMargin: 6 }
+                        Button2 { label: "Refresh"; enabled: !root.loading && !root.preview; onActivated: root.refresh() }
+                        Button2 { label: "Close"; onActivated: Qt.quit() }
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: CenterTheme.border; opacity: 0.55 }
                     Text {
@@ -202,7 +225,6 @@ ShellRoot {
                     // Displays
                     RowLayout {
                         visible: root.section === "displays"; Layout.fillWidth: true; spacing: 8
-                        Button2 { label: "Refresh"; enabled: !root.loading && !root.preview; onActivated: root.refresh() }
                         Button2 { label: "Apply changes"; active: root.changed(); enabled: root.changed() && !root.preview && !action.running; onActivated: root.applyChanges() }
                         Item { Layout.fillWidth: true }
                         Button2 { label: "Use at next login"; enabled: !root.preview && !action.running && root.outputs.length > 0; onActivated: root.runAction(["save"].concat(root.specs(root.baseline))) }
@@ -223,6 +245,39 @@ ShellRoot {
                         Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                         ColumnLayout {
                             width: window.width - 260 - 50; spacing: 10
+                            Rectangle {
+                                Layout.fillWidth: true; implicitHeight: auto.implicitHeight + 24
+                                radius: 6; color: CenterTheme.surface; border.width: 1; border.color: CenterTheme.mutedBorder
+                                ColumnLayout {
+                                    id: auto
+                                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
+                                    spacing: 8
+                                    Text { text: "Automatic layouts - login and dock connection"; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 13; font.bold: true }
+                                    RowLayout {
+                                        Layout.fillWidth: true; spacing: 8
+                                        Text { Layout.fillWidth: true; text: root.dockLabel(root.dockState); color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12 }
+                                        Text { text: root.profileSaved(root.dockState) ? "Saved" : "Not saved"; color: root.profileSaved(root.dockState) ? CenterTheme.success : CenterTheme.warning; font.family: Typography.family; font.pixelSize: 12; font.bold: true }
+                                    }
+                                    Flow {
+                                        Layout.fillWidth: true; spacing: 6
+                                        Button2 { label: "Create draft"; active: root.draft !== null; enabled: root.outputs.length > 0 && !root.preview; onActivated: root.createDraft() }
+                                        Button2 { label: "Save draft as undocked"; enabled: root.draft !== null; onActivated: root.saveDraft("undocked") }
+                                        Button2 { label: "Save draft as docked"; enabled: root.draft !== null; onActivated: root.saveDraft("docked") }
+                                    }
+                                    Text { text: "Saved monitors"; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 12; font.bold: true; Layout.topMargin: 4 }
+                                    Text { visible: Object.keys(root.profiles).length === 0; text: "No saved layouts yet."; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                    Repeater {
+                                        model: ["undocked", "docked"].filter(k => !!root.profiles[k])
+                                        RowLayout {
+                                            required property var modelData
+                                            Layout.fillWidth: true; spacing: 8
+                                            Text { text: modelData === root.dockState ? "●" : "○"; color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 12 }
+                                            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: root.dockLabel(modelData) + ":  " + root.profiles[modelData].filter(x => !x.endsWith(":off")).map(x => x.split(":")[0]).join(", "); color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                            Button2 { label: "Remove"; danger: true; onActivated: root.removeProfile(modelData) }
+                                        }
+                                    }
+                                }
+                            }
                             // Monitor drawing after Titus: every enabled output as a scaled screen with its label.
                             Rectangle {
                                 id: arrangement
@@ -245,9 +300,9 @@ ShellRoot {
                                             visible: modelData.enabled
                                             x: modelData.x * arrangement.scale + 3; y: modelData.y * arrangement.scale + 3
                                             width: root.size(modelData)[0] * arrangement.scale - 6; height: root.size(modelData)[1] * arrangement.scale - 6
-                                            radius: 6; color: CenterTheme.background
+                                            radius: 6; color: CenterTheme.hover
                                             border.width: modelData.primary ? 2 : 1
-                                            border.color: modelData.primary ? CenterTheme.border : CenterTheme.mutedBorder
+                                            border.color: CenterTheme.border
                                             Column {
                                                 anchors.centerIn: parent; spacing: 2
                                                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: String(screenBox.index + 1); color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 26; font.bold: true }
