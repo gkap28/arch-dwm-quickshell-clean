@@ -65,7 +65,7 @@ Item {
                 spacing: 2
                 RowLayout {
                     Layout.fillWidth: true; Layout.preferredHeight: 28
-                    CenterRow { visible: root.page !== ""; text: "‹ back"; onClicked: { root.page = ""; root.message = ""; } }
+                    CenterRow { visible: root.page !== ""; text: "‹ back"; implicitWidth: 60; onClicked: { root.page = ""; root.message = ""; } }
                     Text { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; text: root.page || "Kontrollzentrum"; color: root.foreground; font.family: Typography.family; font.pixelSize: 13 }
                     CenterRow { text: "×"; implicitWidth: 28; onClicked: root.opened = false }
                 }
