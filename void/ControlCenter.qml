@@ -83,7 +83,7 @@ Item {
                     CenterRow { Layout.fillWidth: true; text: "Quick Widgets"; navigates: true; onClicked: root.page = text }
                     CenterRow { Layout.fillWidth: true; text: "Power Settings"; navigates: true; onClicked: root.page = text }
                     Separator {}
-                    CenterRow { Layout.fillWidth: true; text: "Settings"; onClicked: root.page = text }
+                    CenterRow { Layout.fillWidth: true; text: "Settings"; onClicked: root.run("settings") }
                     CenterRow { Layout.fillWidth: true; text: "System Info"; onClicked: root.run("system-info") }
                     CenterRow { Layout.fillWidth: true; text: "Keybinds"; onClicked: root.run("keybinds") }
                     Separator {}

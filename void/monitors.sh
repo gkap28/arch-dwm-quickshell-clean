@@ -2,6 +2,8 @@
 # Restore only Georg's confirmed dual-monitor setup; absent screens stay untouched.
 set -eu
 command -v xrandr >/dev/null 2>&1 || exit 0
+# A layout saved in Settings > Displays wins; otherwise the confirmed default below.
+sh "$HOME/.local/share/dwm-void/display-settings.sh" restore 2>/dev/null && exit 0
 outputs=$(xrandr --query) || exit 0
 printf '%s\n' "$outputs" | grep -q '^HDMI-A-0 connected' || exit 0
 printf '%s\n' "$outputs" | grep -q '^DisplayPort-2 connected' || exit 0
