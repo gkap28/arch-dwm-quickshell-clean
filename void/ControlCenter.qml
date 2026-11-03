@@ -14,7 +14,8 @@ Item {
     property string page: ""
     property string message: ""
     property int dpmsCurrent: 0
-    Process { id: dpmsReader; command: ["sh", root.home + "power-dpms.sh", "status"]; stdout: StdioCollector { onStreamFinished: { const s = text.trim().split(" "); root.dpmsCurrent = Number(s[1] || 0); } } }
+    property int dpmsLast: 600
+    Process { id: dpmsReader; command: ["sh", root.home + "power-dpms.sh", "status"]; stdout: StdioCollector { onStreamFinished: { const s = text.trim().split(" "); root.dpmsCurrent = Number(s[0]) === 1 ? Number(s[1] || 0) : 0; if (root.dpmsCurrent > 0) root.dpmsLast = root.dpmsCurrent; } } }
     signal powerRequested()
     width: 0; height: 0
     onOpenedChanged: { page = ""; message = ""; }
@@ -108,27 +109,38 @@ Item {
                     }
                     Separator {}
                 }
+                // Titus Power Settings 1:1: Screen Timeout row and 3-column presets (Auto Lock omitted on request).
                 ColumnLayout {
-                    visible: root.page === "Power Settings"; Layout.fillWidth: true; spacing: 6
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.dpmsCurrent > 0 ? "Screen timeout enabled" : "Screen timeout disabled"
-                        color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 13
+                    visible: root.page === "Power Settings"; Layout.fillWidth: true; spacing: 4
+                    CenterRow {
+                        Layout.fillWidth: true; text: "Screen Timeout"
+                        selected: root.dpmsCurrent > 0
+                        detail: root.dpmsCurrent <= 0 ? "Off" : root.dpmsCurrent % 3600 === 0 ? (root.dpmsCurrent / 3600) + "h" : (root.dpmsCurrent / 60) + "m"
+                        enabled: !operation.running
+                        onClicked: { const v = root.dpmsCurrent > 0 ? 0 : root.dpmsLast; root.reload("dpms-" + v); root.dpmsCurrent = v; }
                     }
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.dpmsCurrent > 0 ? "Off after " + (root.dpmsCurrent / 60) + " min" : "Off"
-                        color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true; spacing: 6
-                        CenterRow { text: root.dpmsCurrent > 0 ? "Disable DPMS" : "Enable DPMS"; onClicked: root.reload(root.dpmsCurrent > 0 ? "dpms-0" : "dpms-600") }
+                    GridLayout {
+                        Layout.fillWidth: true; columns: 3; columnSpacing: 4; rowSpacing: 4
                         Repeater {
                             model: [{label:"5m",sec:300},{label:"10m",sec:600},{label:"15m",sec:900},{label:"30m",sec:1800},{label:"1h",sec:3600}]
-                            CenterRow {
+                            Rectangle {
+                                id: preset
                                 required property var modelData
-                                text: modelData.label + (root.dpmsCurrent === modelData.sec ? " / Active" : "")
-                                onClicked: { root.reload("dpms-" + modelData.sec); root.dpmsCurrent = modelData.sec; }
+                                readonly property bool active: root.dpmsCurrent === modelData.sec
+                                Layout.fillWidth: true; implicitHeight: 26; radius: 6
+                                color: presetMouse.containsMouse && !active ? CenterTheme.hover : CenterTheme.surface
+                                border.width: 1
+                                border.color: active || presetMouse.containsMouse ? CenterTheme.border : CenterTheme.mutedBorder
+                                Text {
+                                    anchors.centerIn: parent; text: preset.modelData.label
+                                    color: preset.active ? CenterTheme.border : CenterTheme.foreground
+                                    font.family: Typography.family; font.pixelSize: CenterTheme.bodySize
+                                }
+                                MouseArea {
+                                    id: presetMouse; anchors.fill: parent; hoverEnabled: true
+                                    enabled: !operation.running; cursorShape: Qt.PointingHandCursor
+                                    onClicked: { root.reload("dpms-" + preset.modelData.sec); root.dpmsCurrent = preset.modelData.sec; root.dpmsLast = preset.modelData.sec; }
+                                }
                             }
                         }
                     }

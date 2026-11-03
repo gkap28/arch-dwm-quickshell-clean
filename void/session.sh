@@ -2,6 +2,7 @@
 # Own only this session's children; never kill another shell, compositor or sound server.
 data=$HOME/.local/share/dwm-void
 # Session-local groups only; keep existing XKB options.
+sh "$data/power-dpms.sh" restore 2>/dev/null || :
 if command -v setxkbmap >/dev/null 2>&1; then
     setxkbmap -layout us,de,gr 2>/dev/null || :
 else
