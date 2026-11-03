@@ -190,6 +190,7 @@ install -m 644 "$repo/void/update-symbol.svg" "$data/quickshell/update-symbol.sv
 install -m 644 "$repo/void/xbps.svg" "$data/quickshell/xbps.svg"
 install -m 644 "$repo/void/flatpak.svg" "$data/quickshell/flatpak.svg"
 install -m 755 "$repo/void/updates.sh" "$data/updates.sh"
+install -m 755 "$repo/void/keybinds.sh" "$data/keybinds.sh"
 install -m 755 "$repo/void/modules.sh" "$data/modules.sh"
 install -m 755 "$repo/void/module-details.sh" "$data/module-details.sh"
 install -m 644 "$repo/void/logo.svg" "$data/quickshell/logo.svg"
