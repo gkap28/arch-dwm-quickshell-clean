@@ -272,7 +272,27 @@ ShellRoot {
                                             required property var modelData
                                             Layout.fillWidth: true; spacing: 8
                                             Text { text: modelData === root.dockState ? "●" : "○"; color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 12 }
-                                            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: root.dockLabel(modelData) + ":  " + root.profiles[modelData].filter(x => !x.endsWith(":off")).map(x => x.split(":")[0]).join(", "); color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                            Text { Layout.preferredWidth: 190; elide: Text.ElideRight; text: root.dockLabel(modelData); color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                            // Small drawing of the saved layout, like Titus.
+                                            Item {
+                                                id: mini
+                                                readonly property var boxes: root.profiles[parent.modelData].filter(x => !x.endsWith(":off")).map(x => { const p = x.split(":"); const m = p[3].split("x").map(Number); const turn = p[5] === "left" || p[5] === "right"; return { name: p[0], primary: p[2] === "1", w: turn ? m[1] : m[0], h: turn ? m[0] : m[1], x: Number(p[6]), y: Number(p[7]) }; })
+                                                readonly property real tw: Math.max(1, ...boxes.map(b => b.x + b.w))
+                                                readonly property real th: Math.max(1, ...boxes.map(b => b.y + b.h))
+                                                readonly property real sc: Math.min(160 / tw, 44 / th)
+                                                Layout.fillWidth: true; Layout.preferredHeight: 48
+                                                Repeater {
+                                                    model: mini.boxes
+                                                    Rectangle {
+                                                        required property var modelData
+                                                        x: modelData.x * mini.sc + 1; y: modelData.y * mini.sc + 2
+                                                        width: modelData.w * mini.sc - 2; height: modelData.h * mini.sc - 2
+                                                        radius: 3; color: CenterTheme.hover
+                                                        border.width: modelData.primary ? 1 : 0; border.color: CenterTheme.border
+                                                        Text { anchors.centerIn: parent; width: parent.width - 4; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; text: parent.modelData.name; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 9 }
+                                                    }
+                                                }
+                                            }
                                             Button2 { label: "Remove"; danger: true; onActivated: root.removeProfile(modelData) }
                                         }
                                     }
@@ -301,7 +321,7 @@ ShellRoot {
                                             x: modelData.x * arrangement.scale + 3; y: modelData.y * arrangement.scale + 3
                                             width: root.size(modelData)[0] * arrangement.scale - 6; height: root.size(modelData)[1] * arrangement.scale - 6
                                             radius: 6; color: CenterTheme.hover
-                                            border.width: modelData.primary ? 2 : 1
+                                            border.width: modelData.primary ? 2 : 0
                                             border.color: CenterTheme.border
                                             Column {
                                                 anchors.centerIn: parent; spacing: 2
