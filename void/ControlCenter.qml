@@ -109,14 +109,27 @@ Item {
                     Separator {}
                 }
                 ColumnLayout {
-                    visible: root.page === "Power Settings"; Layout.fillWidth: true; spacing: 2
-                    Repeater {
-                        model: [{label:"5m",sec:300},{label:"10m",sec:600},{label:"15m",sec:900},{label:"30m",sec:1800},{label:"1h",sec:3600}]
-                        CenterRow {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            text: modelData.label + (root.dpmsCurrent === modelData.sec ? " / Active" : "")
-                            onClicked: { root.reload("dpms-" + modelData.sec); root.dpmsCurrent = modelData.sec; }
+                    visible: root.page === "Power Settings"; Layout.fillWidth: true; spacing: 6
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.dpmsCurrent > 0 ? "Screen timeout enabled" : "Screen timeout disabled"
+                        color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 13
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.dpmsCurrent > 0 ? "Off after " + (root.dpmsCurrent / 60) + " min" : "Off"
+                        color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true; spacing: 6
+                        CenterRow { text: root.dpmsCurrent > 0 ? "Disable DPMS" : "Enable DPMS"; onClicked: root.reload(root.dpmsCurrent > 0 ? "dpms-0" : "dpms-600") }
+                        Repeater {
+                            model: [{label:"5m",sec:300},{label:"10m",sec:600},{label:"15m",sec:900},{label:"30m",sec:1800},{label:"1h",sec:3600}]
+                            CenterRow {
+                                required property var modelData
+                                text: modelData.label + (root.dpmsCurrent === modelData.sec ? " / Active" : "")
+                                onClicked: { root.reload("dpms-" + modelData.sec); root.dpmsCurrent = modelData.sec; }
+                            }
                         }
                     }
                 }
