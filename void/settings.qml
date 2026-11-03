@@ -222,8 +222,57 @@ ShellRoot {
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: CenterTheme.border; opacity: 0.55 }
                     Text {
-                        visible: root.section !== "displays"
+                        visible: root.section !== "displays" && root.section !== "input"
                         text: "Noch nicht eingerichtet"; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 13
+                    }
+                    // Input - Keyboard: same US/DE/GR switch as the bar, through keyboard-bridge.
+                    Rectangle {
+                        visible: root.section === "input"
+                        Layout.fillWidth: true; implicitHeight: kb.implicitHeight + 24
+                        radius: 6; color: CenterTheme.surface; border.width: 1; border.color: CenterTheme.mutedBorder
+                        property string layout: "—"
+                        property string target: ""
+                        property int tries: 0
+                        id: keyboardCard
+                        Process {
+                            id: kbRead; command: [root.home + "keyboard-bridge", "status"]; running: root.section === "input"
+                            stdout: SplitParser { onRead: data => keyboardCard.layout = data.trim() }
+                        }
+                        Process {
+                            id: kbNext; command: [root.home + "keyboard-bridge", "next"]
+                            stdout: SplitParser { onRead: data => keyboardCard.layout = data.trim() }
+                            onExited: if (keyboardCard.target && keyboardCard.layout.toLowerCase() !== keyboardCard.target && keyboardCard.tries < 3) { keyboardCard.tries++; kbNext.running = true; } else keyboardCard.target = ""
+                        }
+                        Timer { interval: 1000; repeat: true; running: root.section === "input"; onTriggered: if (!kbRead.running && !kbNext.running) kbRead.running = true }
+                        ColumnLayout {
+                            id: kb
+                            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
+                            spacing: 8
+                            Text { text: "Keyboard"; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 13; font.bold: true }
+                            RowLayout {
+                                spacing: 8
+                                Text { text: "Current layout:"; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12 }
+                                Text { text: keyboardCard.layout; color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 12; font.bold: true }
+                            }
+                            Flow {
+                                Layout.fillWidth: true; spacing: 6
+                                Repeater {
+                                    model: ["us", "de", "gr"]
+                                    Button2 {
+                                        required property string modelData
+                                        label: modelData.toUpperCase()
+                                        active: keyboardCard.layout.toLowerCase() === modelData
+                                        enabled: !kbNext.running
+                                        onActivated: if (!active) { keyboardCard.target = modelData; keyboardCard.tries = 0; kbNext.running = true; }
+                                    }
+                                }
+                            }
+                            Text { text: "Gleicher Wechsel wie das Layout-Feld in der Leiste."; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                        }
+                    }
+                    Text {
+                        visible: root.section === "input"
+                        text: "Pointer und Touchpad: noch nicht eingerichtet"; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 12
                     }
                     // Displays
                     RowLayout {
