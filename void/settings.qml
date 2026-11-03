@@ -71,6 +71,16 @@ ShellRoot {
         normalize(list);
         outputs = list; message = "";
     }
+    function placement(index) {
+        const o = outputs[index], ref = outputs.find((r, i) => i !== index && r.enabled);
+        if (!o || !ref || !o.enabled) return "";
+        const a = size(o), b = size(ref);
+        if (o.x + a[0] <= ref.x) return "left";
+        if (o.x >= ref.x + b[0]) return "right";
+        if (o.y + a[1] <= ref.y) return "above";
+        if (o.y >= ref.y + b[1]) return "below";
+        return "";
+    }
     function changed() { return JSON.stringify(specs(outputs)) !== JSON.stringify(specs(baseline)); }
     function refresh() { if (!reader.running) { loading = true; reader.running = true; } }
     function runAction(args) { if (!action.running) { action.command = ["sh", home + "display-settings.sh"].concat(args); action.running = true; } }
@@ -213,6 +223,42 @@ ShellRoot {
                         Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                         ColumnLayout {
                             width: window.width - 260 - 50; spacing: 10
+                            // Monitor drawing after Titus: every enabled output as a scaled screen with its label.
+                            Rectangle {
+                                id: arrangement
+                                readonly property var shown: root.outputs.filter(o => o.enabled)
+                                readonly property real totalW: Math.max(1, ...shown.map(o => o.x + root.size(o)[0]))
+                                readonly property real totalH: Math.max(1, ...shown.map(o => o.y + root.size(o)[1]))
+                                readonly property real scale: Math.min((width - 48) / totalW, (height - 40) / totalH)
+                                Layout.fillWidth: true; implicitHeight: 240; radius: 6
+                                color: CenterTheme.surface; border.width: 1; border.color: CenterTheme.mutedBorder
+                                visible: shown.length > 0
+                                Item {
+                                    width: arrangement.totalW * arrangement.scale; height: arrangement.totalH * arrangement.scale
+                                    anchors.centerIn: parent
+                                    Repeater {
+                                        model: root.outputs
+                                        Rectangle {
+                                            id: screenBox
+                                            required property var modelData
+                                            required property int index
+                                            visible: modelData.enabled
+                                            x: modelData.x * arrangement.scale + 3; y: modelData.y * arrangement.scale + 3
+                                            width: root.size(modelData)[0] * arrangement.scale - 6; height: root.size(modelData)[1] * arrangement.scale - 6
+                                            radius: 6; color: CenterTheme.background
+                                            border.width: modelData.primary ? 2 : 1
+                                            border.color: modelData.primary ? CenterTheme.border : CenterTheme.mutedBorder
+                                            Column {
+                                                anchors.centerIn: parent; spacing: 2
+                                                Text { anchors.horizontalCenter: parent.horizontalCenter; text: String(screenBox.index + 1); color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 26; font.bold: true }
+                                                Text { anchors.horizontalCenter: parent.horizontalCenter; text: screenBox.modelData.name; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 13; font.bold: true }
+                                                Text { anchors.horizontalCenter: parent.horizontalCenter; text: screenBox.modelData.mode + " @ " + screenBox.modelData.rate + " Hz"; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                                Text { anchors.horizontalCenter: parent.horizontalCenter; visible: screenBox.modelData.primary; text: "Primary"; color: CenterTheme.border; font.family: Typography.family; font.pixelSize: 10 }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             Repeater {
                                 model: root.outputs
                                 Rectangle {
@@ -258,6 +304,7 @@ ShellRoot {
                                                     visible: root.outputs.filter((o, i) => i !== card.index && o.enabled).length > 0
                                                     label: modelData.label + " " + (root.outputs.find((o, i) => i !== card.index && o.enabled) || { name: "" }).name
                                                     enabled: card.modelData.enabled
+                                                    active: root.placement(card.index) === modelData.d
                                                     onActivated: root.place(card.index, modelData.d)
                                                 }
                                             }
