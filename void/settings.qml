@@ -126,6 +126,9 @@ ShellRoot {
                         mode: f[5] || (f[8].split(",")[0] || "@").split("@")[0], rate: f[6] || (f[8].split(",")[0] || "@").split("@")[1],
                         rotation: f[7], modes: f[8] ? f[8].split(",") : [] });
                 }
+                // xrandr often has no primary set; dwm then uses the screen at the top left as main monitor.
+                const on = list.filter(o => o.enabled);
+                if (on.length && !on.some(o => o.primary)) on.reduce((a, b) => (b.y < a.y || (b.y === a.y && b.x < a.x)) ? b : a).primary = true;
                 root.outputs = list; root.baseline = root.clone(list);
             }
         }
@@ -265,9 +268,9 @@ ShellRoot {
                                         Button2 { label: "Save draft as docked"; enabled: root.draft !== null; onActivated: root.saveDraft("docked") }
                                     }
                                     Text { text: "Saved monitors"; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 12; font.bold: true; Layout.topMargin: 4 }
-                                    Text { visible: Object.keys(root.profiles).length === 0; text: "No saved layouts yet."; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
+                                    Text { visible: false; text: "No saved layouts yet."; color: CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 11 }
                                     Repeater {
-                                        model: ["undocked", "docked"].filter(k => !!root.profiles[k])
+                                        model: ["undocked", "docked"].filter(k => !!root.profiles[k] || k === root.dockState)
                                         RowLayout {
                                             required property var modelData
                                             Layout.fillWidth: true; spacing: 8
@@ -276,7 +279,7 @@ ShellRoot {
                                             // Small drawing of the saved layout, like Titus.
                                             Item {
                                                 id: mini
-                                                readonly property var boxes: root.profiles[parent.modelData].filter(x => !x.endsWith(":off")).map(x => { const p = x.split(":"); const m = p[3].split("x").map(Number); const turn = p[5] === "left" || p[5] === "right"; return { name: p[0], primary: p[2] === "1", w: turn ? m[1] : m[0], h: turn ? m[0] : m[1], x: Number(p[6]), y: Number(p[7]) }; })
+                                                readonly property var boxes: (root.profiles[parent.modelData] || root.specs(root.outputs)).filter(x => !x.endsWith(":off")).map(x => { const p = x.split(":"); const m = p[3].split("x").map(Number); const turn = p[5] === "left" || p[5] === "right"; return { name: p[0], primary: p[2] === "1", w: turn ? m[1] : m[0], h: turn ? m[0] : m[1], x: Number(p[6]), y: Number(p[7]) }; })
                                                 readonly property real tw: Math.max(1, ...boxes.map(b => b.x + b.w))
                                                 readonly property real th: Math.max(1, ...boxes.map(b => b.y + b.h))
                                                 readonly property real sc: Math.min(160 / tw, 44 / th)
@@ -293,7 +296,8 @@ ShellRoot {
                                                     }
                                                 }
                                             }
-                                            Button2 { label: "Remove"; danger: true; onActivated: root.removeProfile(modelData) }
+                                            Text { visible: !root.profiles[modelData]; text: "current"; color: CenterTheme.warning; font.family: Typography.family; font.pixelSize: 11 }
+                                            Button2 { visible: !!root.profiles[modelData]; label: "Remove"; danger: true; onActivated: root.removeProfile(modelData) }
                                         }
                                     }
                                 }
