@@ -8,8 +8,6 @@ if command -v setxkbmap >/dev/null 2>&1; then
 else
     echo "Tastaturwechsel: setxkbmap fehlt." >&2
 fi
-"$data/dwm" &
-wm=$!
 panel=''
 compositor=''
 sound=''
@@ -53,11 +51,16 @@ if command -v quickshell >/dev/null 2>&1; then
     if [ -r "$data/quickshell/shell.qml" ] && [ -r "$data/quickshell/StatusModules.qml" ]; then
         quickshell --path "$data/quickshell/shell.qml" > "$data/quickshell.log" 2>&1 &
         panel=$!
+        # Let Quickshell finish loading first, so dwm adopts its bar at once and the native bar never shows.
+        tries=0
+        while [ "$tries" -lt 40 ] && ! grep -q 'Configuration Loaded' "$data/quickshell.log" 2>/dev/null; do sleep .1; tries=$((tries + 1)); done
     else
         # Keep the native Nord bar instead of a half-loaded panel; say why.
         echo 'Leiste: Quickshell-Dateien unvollstaendig. Bitte: git pull && sh void/start.sh --install' > "$data/quickshell.log" 2>&1
     fi
 fi
+"$data/dwm" &
+wm=$!
 cleanup() {
     [ -z "$panel" ] || kill "$panel" 2>/dev/null || :
     [ -z "$compositor" ] || kill "$compositor" 2>/dev/null || :
