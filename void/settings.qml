@@ -282,17 +282,17 @@ ShellRoot {
                                                 readonly property var boxes: (root.profiles[parent.modelData] || root.specs(root.outputs)).filter(x => !x.endsWith(":off")).map(x => { const p = x.split(":"); const m = p[3].split("x").map(Number); const turn = p[5] === "left" || p[5] === "right"; return { name: p[0], primary: p[2] === "1", w: turn ? m[1] : m[0], h: turn ? m[0] : m[1], x: Number(p[6]), y: Number(p[7]) }; })
                                                 readonly property real tw: Math.max(1, ...boxes.map(b => b.x + b.w))
                                                 readonly property real th: Math.max(1, ...boxes.map(b => b.y + b.h))
-                                                readonly property real sc: Math.min(160 / tw, 44 / th)
-                                                Layout.fillWidth: true; Layout.preferredHeight: 48
+                                                readonly property real sc: Math.min(380 / tw, 110 / th)
+                                                Layout.fillWidth: true; Layout.preferredHeight: 118
                                                 Repeater {
                                                     model: mini.boxes
                                                     Rectangle {
                                                         required property var modelData
-                                                        x: modelData.x * mini.sc + 1; y: modelData.y * mini.sc + 2
-                                                        width: modelData.w * mini.sc - 2; height: modelData.h * mini.sc - 2
-                                                        radius: 3; color: CenterTheme.hover
+                                                        x: mini.width - mini.tw * mini.sc - 12 + modelData.x * mini.sc + 2; y: modelData.y * mini.sc + 4
+                                                        width: modelData.w * mini.sc - 4; height: modelData.h * mini.sc - 4
+                                                        radius: 5; color: CenterTheme.hover
                                                         border.width: modelData.primary ? 1 : 0; border.color: CenterTheme.border
-                                                        Text { anchors.centerIn: parent; width: parent.width - 4; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; text: parent.modelData.name; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 9 }
+                                                        Text { anchors.centerIn: parent; width: parent.width - 4; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; text: parent.modelData.name; color: CenterTheme.strong; font.family: Typography.family; font.pixelSize: 12; font.bold: true }
                                                     }
                                                 }
                                             }
