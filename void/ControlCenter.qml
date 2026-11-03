@@ -65,7 +65,7 @@ Item {
                 spacing: 2
                 RowLayout {
                     Layout.fillWidth: true; Layout.preferredHeight: 28
-                    CenterRow { visible: root.page !== ""; text: "‹ back"; implicitWidth: 60; onClicked: { root.page = ""; root.message = ""; } }
+                    Text { visible: root.page !== ""; text: "< Back"; color: backMouse.containsMouse ? CenterTheme.strong : CenterTheme.foreground; font.family: Typography.family; font.pixelSize: 13; MouseArea { id: backMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.page = ""; root.message = ""; } } }
                     Text { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; text: root.page || "Kontrollzentrum"; color: root.foreground; font.family: Typography.family; font.pixelSize: 13 }
                     CenterRow { text: "×"; implicitWidth: 28; onClicked: root.opened = false }
                 }
