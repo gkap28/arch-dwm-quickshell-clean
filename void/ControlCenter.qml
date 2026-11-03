@@ -88,6 +88,7 @@ Item {
                     CenterRow { Layout.fillWidth: true; text: "Reload Quickshell"; enabled: !operation.running; onClicked: root.reload("reload-quickshell") }
                     CenterRow { Layout.fillWidth: true; text: "Reload dwm"; enabled: !operation.running; onClicked: root.reload("reload-dwm") }
                     CenterRow { Layout.fillWidth: true; text: "Restart Picom"; enabled: !operation.running; onClicked: root.reload("restart-picom") }
+                    CenterRow { Layout.fillWidth: true; text: "Restart NetworkManager"; enabled: !operation.running; onClicked: root.reload("restart-networkmanager") }
                 }
                 ColumnLayout {
                     visible: root.page === "Quick Widgets"; Layout.fillWidth: true; spacing: 2
